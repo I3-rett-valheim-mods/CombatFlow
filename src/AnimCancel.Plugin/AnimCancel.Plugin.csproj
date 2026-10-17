@@ -33,9 +33,8 @@
     <ProjectReference Include="..\AnimCancel.Core\AnimCancel.Core.csproj" />
   </ItemGroup>
 
-  <!-- Publicizes the game assembly at build time so private game members are
-       reachable as typed members. PrivateAssets keeps
-       the tool out of the output. -->
+  <!-- Publicizes the game assembly at build time so its private members are
+       reachable as typed members. PrivateAssets keeps the tool out of the output. -->
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" ExcludeAssets="runtime" />
   </ItemGroup>

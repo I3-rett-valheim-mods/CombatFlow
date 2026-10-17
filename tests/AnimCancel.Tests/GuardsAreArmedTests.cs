@@ -29,7 +29,7 @@ public class GuardsAreArmedTests
         }
 
         Assert.Fail(
-            "assembly_valheim.dll and assembly_guiutils.dll were not found, so all API guard "
+            "assembly_valheim.dll was not found, so all API guard "
             + "tests passed without asserting anything. Set VALHEIM_MANAGED to your "
             + "valheim_Data\\Managed folder, or set ANIMCANCEL_ALLOW_MISSING_GAME=1 to "
             + "acknowledge that this run does not check API compatibility.");

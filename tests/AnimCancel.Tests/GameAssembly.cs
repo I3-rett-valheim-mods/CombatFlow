@@ -24,16 +24,12 @@ namespace AnimCancel.Tests;
 internal static class GameAssembly
 {
     /// <summary>
-    /// The assemblies the plugin references. Localization is in assembly_guiutils
-    /// rather than assembly_valheim, which is exactly the kind of thing worth
-    /// having a test remember.
+    /// The game assemblies the plugin references. Add a file name here only when a
+    /// guard needs a type that lives outside assembly_valheim.
     /// </summary>
     private static readonly string[] FileNames =
     {
         "assembly_valheim.dll",
-        "assembly_guiutils.dll",
-        // Cover.GetCoverForPoint, the roof check EggGrow runs, lives here.
-        "assembly_utils.dll",
     };
 
     private static readonly Lazy<List<AssemblyDefinition>> Loaded = new(Load);
