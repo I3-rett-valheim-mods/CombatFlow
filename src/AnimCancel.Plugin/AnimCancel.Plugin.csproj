@@ -60,6 +60,10 @@
       <HintPath>$(ValheimManaged)\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private><SpecificVersion>False</SpecificVersion>
     </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ValheimManaged)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>False</Private><SpecificVersion>False</SpecificVersion>
+    </Reference>
     <Reference Include="UnityEngine.AnimationModule">
       <HintPath>$(ValheimManaged)\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private><SpecificVersion>False</SpecificVersion>

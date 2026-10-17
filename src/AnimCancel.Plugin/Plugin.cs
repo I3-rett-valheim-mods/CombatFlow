@@ -15,9 +15,11 @@ public sealed class Plugin : BaseUnityPlugin
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
     }
 
+    private void OnGUI() => InputGate.SampleGuiFocus();
+
     private void Update()
     {
-        if (!Settings.ToggleKey.Value.IsDown())
+        if (!Settings.ToggleKey.Value.IsDown() || !InputGate.AcceptsHotkey())
         {
             return;
         }

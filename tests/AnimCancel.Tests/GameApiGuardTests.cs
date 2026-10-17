@@ -148,4 +148,64 @@ public class GameApiGuardTests
 
         Assert.Contains(GameAssembly.NestedType("MessageHud", "MessageType").Fields, f => f.Name == "TopLeft");
     }
+
+    // ----- InputGate (toggle key must not fire while typing) -----------------
+
+    [Theory]
+    [InlineData("Console")]
+    [InlineData("TextInput")]
+    [InlineData("Menu")]
+    [InlineData("InventoryGui")]
+    public void IsVisible_is_public_and_static(string typeName)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method(typeName, "IsVisible");
+
+        Assert.True(method.IsPublic);
+        Assert.True(method.IsStatic);
+    }
+
+    [Fact]
+    public void Chat_instance_is_a_public_static_property()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition getter = GameAssembly.Method("Chat", "get_instance");
+
+        Assert.True(getter.IsPublic);
+        Assert.True(getter.IsStatic);
+        Assert.Equal("Chat", getter.ReturnType.Name);
+    }
+
+    [Fact]
+    public void Chat_HasFocus_is_public()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        Assert.True(GameAssembly.Method("Chat", "HasFocus").IsPublic);
+    }
+
+    [Fact]
+    public void Player_m_localPlayerExists_is_a_public_static_field()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        FieldDefinition field = GameAssembly.Field("Player", "m_localPlayerExists");
+
+        Assert.True(field.IsPublic);
+        Assert.True(field.IsStatic);
+    }
 }
