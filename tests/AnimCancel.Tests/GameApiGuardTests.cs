@@ -1,3 +1,4 @@
+using System.Linq;
 using Mono.Cecil;
 using Xunit;
 
@@ -99,5 +100,52 @@ public class GameApiGuardTests
 
         Assert.True(method.IsPublic);
         Assert.False(method.IsStatic);
+    }
+
+    // ----- MessageHud (toggle feedback) --------------------------------------
+
+    [Fact]
+    public void MessageHud_instance_is_a_public_static_getter()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        PropertyDefinition property = GameAssembly.Type("MessageHud").Properties.First(p => p.Name == "instance");
+
+        Assert.NotNull(property.GetMethod);
+        Assert.True(property.GetMethod.IsStatic);
+        Assert.True(property.GetMethod.IsPublic);
+        Assert.Equal("MessageHud", property.PropertyType.FullName);
+    }
+
+    [Fact]
+    public void MessageHud_ShowMessage_takes_MessageType_and_string_first()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Type("MessageHud").Methods
+            .First(m => m.Name == "ShowMessage" && m.Parameters.Count >= 2);
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("MessageType", method.Parameters[0].ParameterType.Name);
+        Assert.Equal("System.String", method.Parameters[1].ParameterType.FullName);
+        Assert.All(method.Parameters.Skip(2), p => Assert.True(p.IsOptional, $"{p.Name} is no longer optional."));
+    }
+
+    [Fact]
+    public void MessageHud_MessageType_has_TopLeft()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        Assert.Contains(GameAssembly.NestedType("MessageHud", "MessageType").Fields, f => f.Name == "TopLeft");
     }
 }
