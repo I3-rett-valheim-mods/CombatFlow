@@ -74,6 +74,49 @@ public class GameApiGuardTests
     }
 
     [Fact]
+    public void Humanoid_StartAttack_is_a_bool_override_taking_Character_and_bool()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Humanoid", "StartAttack", "Character", "Boolean");
+
+        Assert.True(method.IsPublic);
+        Assert.True(method.IsVirtual);
+        Assert.False(method.IsNewSlot, "Humanoid.StartAttack no longer overrides Character.StartAttack.");
+        Assert.Equal("System.Boolean", method.ReturnType.FullName);
+    }
+
+    [Fact]
+    public void Player_does_not_override_StartAttack_or_OnAttackTrigger()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // The patches sit on Humanoid; a Player override would bypass them.
+        Assert.DoesNotContain(GameAssembly.Type("Player").Methods,
+            m => m.Name == "StartAttack" || m.Name == "OnAttackTrigger");
+    }
+
+    [Fact]
+    public void Humanoid_GetCurrentWeapon_is_public_instance()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Humanoid", "GetCurrentWeapon");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+    }
+
+    [Fact]
     public void Character_InEmote_is_virtual()
     {
         if (!GameAssembly.IsAvailable)
