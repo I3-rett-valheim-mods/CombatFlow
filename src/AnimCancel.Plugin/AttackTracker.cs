@@ -98,6 +98,34 @@ internal static class AttackTracker
     /// <summary>Called every frame from Plugin.Update: fires a delayed cancel when due.</summary>
     internal static void Tick()
     {
+        try
+        {
+            TickCore();
+        }
+        catch (Exception e)
+        {
+            if (!_tickReported)
+            {
+                _tickReported = true;
+                ReviewLog.Log?.LogError($"{nameof(AttackTracker)}.{nameof(Tick)}: {e}");
+            }
+        }
+    }
+
+    private static bool _tickReported;
+
+    private static void TickCore()
+    {
+        if (!Plugin.Current.Enabled)
+        {
+            // Disabled: nothing may stay pending, or the first relaunch after re-enabling
+            // would report a stale dtSinceCancel and a stale delayed cancel could fire.
+            _pendingPlayer = null;
+            _pendingAttack = null;
+            Canceller.InFlight = false;
+            return;
+        }
+
         if (_pendingAttack == null || Time.time < _pendingDue)
         {
             return;
@@ -109,22 +137,23 @@ internal static class AttackTracker
         _pendingPlayer = null;
         _pendingAttack = null;
 
-        CancelSettings s = Plugin.Current;
-        if (!s.Enabled)
-        {
-            return;
-        }
+        bool samePlayer = player != null && player == Player.m_localPlayer;
+        CancelDecision d = CancelPolicy.ShouldFireDelayed(
+            enabled: true,
+            sameAttack: samePlayer && player!.m_currentAttack == atk,
+            staggering: samePlayer && player!.IsStaggering(),
+            inAttack: samePlayer && player!.InAttack());
 
-        if (player == null || player != Player.m_localPlayer || player.m_currentAttack != atk)
+        if (!d.Cancel)
         {
             if (ReviewLog.On)
             {
-                LogDecision(AttackClassifier.Classify(atk.m_attackAnimation), atk.m_currentAttackCainLevel, false, "superseded");
+                LogDecision(AttackClassifier.Classify(atk.m_attackAnimation), atk.m_currentAttackCainLevel, false, d.Reason);
             }
             return;
         }
 
-        Canceller.Cancel(player, emote);
+        Canceller.Cancel(player!, emote);
     }
 
     private static void LogDecision(AttackKind kind, int lvl, bool cancel, string reason) =>

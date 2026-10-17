@@ -103,6 +103,21 @@ public class GameApiGuardTests
     }
 
     [Fact]
+    public void Character_IsStaggering_is_a_public_instance_bool()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Character", "IsStaggering");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Boolean", method.ReturnType.FullName);
+    }
+
+    [Fact]
     public void Humanoid_GetCurrentWeapon_is_public_instance()
     {
         if (!GameAssembly.IsAvailable)

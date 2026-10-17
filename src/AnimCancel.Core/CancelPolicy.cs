@@ -49,6 +49,17 @@ namespace AnimCancel.Core
             return new CancelDecision(true, "ok");
         }
 
+        /// <summary>
+        /// At the due time of a delayed cancel: fire only if the same attack is still
+        /// current, the player is not staggering and is still in the attack state.
+        /// </summary>
+        public static CancelDecision ShouldFireDelayed(bool enabled, bool sameAttack, bool staggering, bool inAttack)
+        {
+            if (!enabled) return new CancelDecision(false, "disabled");
+            if (!sameAttack || staggering || !inAttack) return new CancelDecision(false, "superseded");
+            return new CancelDecision(true, "ok");
+        }
+
         public static CancelDecision ShouldCancelDodge(CancelSettings s)
         {
             if (!s.Enabled) return new CancelDecision(false, "disabled");
