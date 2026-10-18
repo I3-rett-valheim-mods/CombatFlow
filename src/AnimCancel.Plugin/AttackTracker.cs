@@ -127,7 +127,7 @@ internal static class AttackTracker
             // would report a stale dtSinceCancel and a stale delayed cancel could fire.
             _pendingPlayer = null;
             _pendingAttack = null;
-            Canceller.Reset();
+            Canceller.Disable();
             return;
         }
 

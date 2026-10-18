@@ -67,5 +67,12 @@ namespace AnimCancel.Core
         /// </summary>
         public static bool EmoteTriggerSpent(bool currentTagIsEmote, bool nextTagIsEmote)
             => currentTagIsEmote || nextTagIsEmote;
+
+        /// <summary>
+        /// Plugin turned off mid-cancel: stop the emote locally if layer 0 is in, or blending
+        /// into, it, or the pose would stay.
+        /// </summary>
+        public static bool StopOnDisable(bool inFlight, bool currentTagIsEmote, bool nextTagIsEmote)
+            => inFlight && (currentTagIsEmote || nextTagIsEmote);
     }
 }

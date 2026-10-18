@@ -63,5 +63,14 @@ namespace AnimCancel.Tests
             Assert.True(RecoveryPolicy.EmoteTriggerSpent(currentTagIsEmote: false, nextTagIsEmote: true));
             Assert.False(RecoveryPolicy.EmoteTriggerSpent(false, false));
         }
+
+        [Fact]
+        public void Disable_mid_cancel_stops_the_emote_only_when_in_or_entering_it()
+        {
+            Assert.True(RecoveryPolicy.StopOnDisable(inFlight: true, currentTagIsEmote: false, nextTagIsEmote: true));
+            Assert.True(RecoveryPolicy.StopOnDisable(inFlight: true, currentTagIsEmote: true, nextTagIsEmote: false));
+            Assert.False(RecoveryPolicy.StopOnDisable(inFlight: true, currentTagIsEmote: false, nextTagIsEmote: false));
+            Assert.False(RecoveryPolicy.StopOnDisable(inFlight: false, currentTagIsEmote: true, nextTagIsEmote: false));
+        }
     }
 }

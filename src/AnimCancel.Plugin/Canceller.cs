@@ -117,7 +117,41 @@ internal static class Canceller
         return true;
     }
 
-    /// <summary>Drops everything (plugin disabled).</summary>
+    /// <summary>
+    /// Plugin disabled (every frame while off): stops our emote locally if a cancel is in
+    /// flight and layer 0 is in or entering it, then drops everything.
+    /// </summary>
+    internal static void Disable()
+    {
+        if (!InFlight && !CancelledState.HasValue && _emoteTrigger == null)
+        {
+            return;
+        }
+
+        Player? p = Player.m_localPlayer;
+        Animator? animator = p != null ? p.m_animator : null;
+        if (p != null && animator != null)
+        {
+            bool inTransition = animator.IsInTransition(0);
+            bool currentIsEmote = animator.GetCurrentAnimatorStateInfo(0).tagHash == TagEmote;
+            bool nextIsEmote = inTransition && animator.GetNextAnimatorStateInfo(0).tagHash == TagEmote;
+            if (RecoveryPolicy.StopOnDisable(InFlight, currentIsEmote, nextIsEmote))
+            {
+                StopEmote(p, animator);
+                if (ReviewLog.On)
+                {
+                    ReviewLog.Write("recovery_stop",
+                        ("dtSinceCancel", DebugLine.Num(Time.time - LastCancelTime)), ("reason", "disabled"));
+                }
+            }
+
+            ResetEmoteTrigger(animator);
+        }
+
+        Reset();
+    }
+
+    /// <summary>Drops everything (no local player).</summary>
     internal static void Reset()
     {
         InFlight = false;
