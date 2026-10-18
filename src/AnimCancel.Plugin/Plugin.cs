@@ -28,6 +28,7 @@ public sealed class Plugin : BaseUnityPlugin
     private void Update()
     {
         AttackTracker.Tick();
+        ComboLab.Tick();
 
         if (!Settings.ToggleKey.Value.IsDown() || !InputGate.AcceptsHotkey())
         {

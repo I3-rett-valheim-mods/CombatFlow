@@ -25,6 +25,10 @@ internal static class Settings
     private static ConfigEntry<CancelEmote> _emote = null!;
     private static ConfigEntry<float> _delayAfterHit = null!;
     private static ConfigEntry<bool> _debugLog = null!;
+    private static ConfigEntry<bool> _comboLab = null!;
+
+    /// <summary>Combo lab log is on. Kept out of the snapshot: it is measurement only and works with Enabled off.</summary>
+    internal static bool ComboLabLog { get; private set; }
 
     internal static CancelSettings Snapshot() => _snapshot;
 
@@ -59,6 +63,8 @@ internal static class Settings
                 new ConfigurationManagerAttributes { Order = 90, IsAdvanced = true }));
         _debugLog = config.Bind("Advanced", "Debug log", d.DebugLog,
             Describe("Log the timestamp of every damage event and cancel, for measuring DPS.", 80, advanced: true));
+        _comboLab = config.Bind("Advanced", "Combo lab log", false,
+            Describe("Measurement only: log inputs, attack starts, animator states, blocking and hits of the local player (CL lines), even with Enabled off.", 70, advanced: true));
 
         config.SettingChanged += (_, __) => Rebuild();
         Rebuild();
@@ -71,7 +77,9 @@ internal static class Settings
             IsAdvanced = advanced ? true : (bool?)null,
         });
 
-    private static void Rebuild() =>
+    private static void Rebuild()
+    {
+        ComboLabLog = _comboLab.Value;
         _snapshot = new CancelSettings(
             Enabled.Value,
             _swordCombo.Value,
@@ -82,4 +90,5 @@ internal static class Settings
             _emote.Value,
             _delayAfterHit.Value,
             _debugLog.Value);
+    }
 }

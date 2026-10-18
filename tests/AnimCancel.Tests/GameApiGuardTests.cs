@@ -28,6 +28,11 @@ public class GameApiGuardTests
     [InlineData("Character", "m_secondaryAttackHold", "System.Boolean")]
     [InlineData("CharacterAnimEvent", "m_character", "Character")]
     [InlineData("CharacterAnimEvent", "m_animator", "UnityEngine.Animator")]
+    [InlineData("Character", "m_zanim", "ZSyncAnimation")]          // combo lab: trigger owner check
+    [InlineData("Character", "m_name", "System.String")]            // combo lab: hit target
+    [InlineData("Player", "m_cachedFrame", "System.Int32")]         // combo lab: InAttack cache, read only
+    [InlineData("Player", "m_cachedAttack", "System.Boolean")]
+    [InlineData("Humanoid", "m_timeSinceLastAttack", "System.Single")] // combo lab: chain reset > 0.2 s
     public void Instance_field_exists_with_expected_type(string typeName, string fieldName, string fieldType)
     {
         if (!GameAssembly.IsAvailable)
@@ -303,5 +308,158 @@ public class GameApiGuardTests
         Assert.False(method.IsStatic);
         Assert.Equal("System.Void", method.ReturnType.FullName);
         Assert.Equal("speedScale", method.Parameters[0].Name);
+    }
+
+    // ----- Combo lab log (measurement only) ---------------------------------
+
+    [Fact]
+    public void MonoUpdaters_UpdateCount_is_a_public_static_int()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // Player.InAttack caches on this counter; the lab logs it as ff.
+        PropertyDefinition property = GameAssembly.Type("MonoUpdaters").Properties.First(p => p.Name == "UpdateCount");
+
+        Assert.True(property.GetMethod.IsStatic);
+        Assert.True(property.GetMethod.IsPublic);
+        Assert.Equal("System.Int32", property.PropertyType.FullName);
+    }
+
+    [Fact]
+    public void Player_InAttack_still_caches_on_m_cachedFrame_and_MonoUpdaters_UpdateCount()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // ComboLab.InAttackNoCache mirrors this cache; if the game drops it the mirror is wrong.
+        MethodDefinition method = GameAssembly.Method("Player", "InAttack");
+        string[] operands = method.Body.Instructions.Select(i => i.Operand?.ToString() ?? "").ToArray();
+
+        Assert.Contains(operands, o => o.Contains("MonoUpdaters::get_UpdateCount"));
+        Assert.Contains(operands, o => o.Contains("Player::m_cachedFrame"));
+        Assert.Contains(operands, o => o.Contains("Player::m_cachedAttack"));
+    }
+
+    [Fact]
+    public void ZSyncAnimation_SetTrigger_is_a_single_public_void_taking_string_name()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        Assert.Single(GameAssembly.Type("ZSyncAnimation").Methods, m => m.Name == "SetTrigger");
+        MethodDefinition method = GameAssembly.Method("ZSyncAnimation", "SetTrigger", "String");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Void", method.ReturnType.FullName);
+        Assert.Equal("name", method.Parameters[0].Name);
+    }
+
+    [Fact]
+    public void Humanoid_IsBlocking_is_a_bool_override_and_Player_does_not_override_it()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Humanoid", "IsBlocking");
+
+        Assert.True(method.IsPublic);
+        Assert.True(method.IsVirtual);
+        Assert.False(method.IsNewSlot, "Humanoid.IsBlocking no longer overrides Character.IsBlocking.");
+        Assert.Equal("System.Boolean", method.ReturnType.FullName);
+        Assert.DoesNotContain(GameAssembly.Type("Player").Methods, m => m.Name == "IsBlocking");
+    }
+
+    [Fact]
+    public void Character_Damage_is_a_public_void_taking_HitData_hit()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Character", "Damage", "HitData");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Void", method.ReturnType.FullName);
+        Assert.Equal("hit", method.Parameters[0].Name);
+        Assert.DoesNotContain(GameAssembly.Type("Player").Methods, m => m.Name == "Damage");
+        Assert.DoesNotContain(GameAssembly.Type("Humanoid").Methods, m => m.Name == "Damage");
+    }
+
+    [Theory]
+    [InlineData("GetAttacker", "Character")]
+    [InlineData("GetTotalDamage", "System.Single")]
+    public void HitData_getter_is_public_instance(string methodName, string returnType)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("HitData", methodName);
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal(returnType, method.ReturnType.FullName);
+    }
+
+    [Fact]
+    public void Player_HaveQueuedChain_is_a_bool_override()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Player", "HaveQueuedChain");
+
+        Assert.True(method.IsVirtual);
+        Assert.False(method.IsNewSlot, "Player.HaveQueuedChain no longer overrides Humanoid.HaveQueuedChain.");
+        Assert.Equal("System.Boolean", method.ReturnType.FullName);
+    }
+
+    [Theory]
+    [InlineData(1, "attack")]
+    [InlineData(2, "attackHold")]
+    [InlineData(3, "secondaryAttack")]
+    [InlineData(4, "secondaryAttackHold")]
+    [InlineData(5, "block")]
+    [InlineData(6, "blockHold")]
+    public void Player_SetControls_button_parameters_keep_their_names(int index, string name)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // Harmony binds the lab prefix arguments by name.
+        MethodDefinition method = GameAssembly.Type("Player").Methods.Single(m => m.Name == "SetControls");
+
+        Assert.Equal(name, method.Parameters[index].Name);
+        Assert.Equal("System.Boolean", method.Parameters[index].ParameterType.FullName);
+    }
+
+    [Fact]
+    public void Humanoid_StartAttack_second_parameter_is_secondaryAttack()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Humanoid", "StartAttack", "Character", "Boolean");
+
+        Assert.Equal("secondaryAttack", method.Parameters[1].Name);
     }
 }
