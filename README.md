@@ -78,7 +78,8 @@ counting each swing's damage multiplier; factor against the vanilla secondary):
 | Max combo, Loop | 7.63 (peak 8.56) | x4.65 |
 
 Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
-secondary (the chain swings are part of it), so stamina stays flat while you hold the button.
+secondary (the chain swings are part of it), so stamina stays flat while you hold the button. After `Max combo loop cap` extra swings a
+still-held button starts a new secondary, which costs stamina again.
 To measure it yourself, turn on **Debug log**, switch the per-weapon cancel options off for a
 vanilla run, and compare the timestamps of the damage events. **Combo lab log** (Advanced)
 writes much more detail (it needs Debug log on as well), but it is a debugging aid for bug

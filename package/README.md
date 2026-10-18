@@ -19,7 +19,7 @@ that does not have it.**
   primary is the three-blow sword combo. `Max combo mode` picks what follows the third
   swing: `Cycle` (default) cancels it; `Loop` keeps alternating the second and third swings
   while the secondary button is held, and cancels at the current swing's hit once it is
-  released (or after 40 extra swings).
+  released (or after `Max combo loop cap` extra swings, 40 by default).
 - **Berserker axes:** cancels after the last hit of a blow, and only when that is faster
   than the game's own chain point. The last blow of the combo and, if enabled, Cleave are
   always eligible.
@@ -49,12 +49,14 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
 | Sword | Max combo (auto) | false | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
 | Sword | Max combo mode | Cycle | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held (only the first secondary costs stamina); releasing takes effect at the next hit. |
+| Sword | Max combo loop cap | 40 | Loop mode only: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
 | Advanced | Cancel emote | NoNoNo | The emote played under the hood, `NoNoNo` or `Cheer`. |
 | Advanced | Delay after hit (s) | 0 | Seconds to wait after the hit before cancelling, 0 to 0.3. |
-| Advanced | Debug log | false | Log the time of every damage event and cancel. |
+| Advanced | Debug log | false | Log the time of every damage event and cancel. While it is off, the mod writes nothing to the log apart from its startup line and errors. |
+| Advanced | Combo lab log | false | Detailed measurement log for bug reports. Needs Debug log on as well. |
 
 ## How much faster
 
@@ -71,10 +73,12 @@ counting each swing's damage multiplier; factor against the vanilla secondary):
 | Max combo, Loop | 7.63 (peak 8.56) | x4.65 |
 
 Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
-secondary (the chain swings are part of it), so stamina stays flat while you hold the button.
+secondary (the chain swings are part of it), so stamina stays flat while you hold the button. After `Max combo loop cap` extra swings a
+still-held button starts a new secondary, which costs stamina again.
 To measure it yourself, turn on **Debug log**, switch the per-weapon cancel options off for a
 vanilla run, and compare the timestamps of the damage events. **Combo lab log** (Advanced)
-writes much more detail, but it is a debugging aid for bug reports, not something to leave on.
+writes much more detail (it needs Debug log on as well), but it is a debugging aid for bug
+reports, not something to leave on.
 
 ## Multiplayer
 
@@ -86,7 +90,7 @@ server-side. The mod appears in the plugin list like any other.
 ## Compatibility
 
 It patches these game methods, so other mods that patch the same ones may conflict:
-`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Player.OnDodgeMortal`,
+`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Humanoid.UnequipItem`, `Player.OnDodgeMortal`,
 `Player.SetControls` and `CharacterAnimEvent.Speed`.
 
 ## Reporting a bug

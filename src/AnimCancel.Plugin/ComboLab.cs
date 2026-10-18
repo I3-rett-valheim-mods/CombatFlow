@@ -134,8 +134,9 @@ internal static class ComboLab
             return p.m_cachedAttack;
         }
 
-        // Player.InAttack: layer 0 through the cached next-or-current tag (the same Animator reads,
-        // done here without writing the cache), then layers 1.. with the same rule.
+        // Player.InAttack's rule, done here without writing its cache. This mirror reads layer 0 live,
+        // while the game reads its per-update cached next-or-current tag, so during a transition the two
+        // can differ for one frame. Diagnostic only; layers 1.. use the same rule.
         Animator a = p.m_animator;
         for (int i = 0; i < a.layerCount; i++)
         {
