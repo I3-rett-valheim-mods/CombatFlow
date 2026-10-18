@@ -18,6 +18,7 @@ public sealed class Plugin : BaseUnityPlugin
         ReviewLog.Log = Logger;
         _harmony = new Harmony(PluginInfo.Guid);
         _harmony.PatchAll();
+        // The one line written whatever Debug log says.
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
         Settings.LogConfig();
     }
@@ -39,13 +40,10 @@ public sealed class Plugin : BaseUnityPlugin
         // Changing the entry persists it and rebuilds the snapshot via SettingChanged.
         Settings.Enabled.Value = !Settings.Enabled.Value;
         string state = Settings.Enabled.Value ? "ON" : "OFF";
+        // Debug log only (LogGate); the on-screen message below is always shown.
         if (ReviewLog.On)
         {
             ReviewLog.Write("toggle", ("enabled", DebugLine.Bool(Settings.Enabled.Value)));
-        }
-        else
-        {
-            Logger.LogInfo($"AnimCancel {state}");
         }
 
         if (MessageHud.instance != null)

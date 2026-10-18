@@ -8,7 +8,7 @@ namespace AnimCancel;
 /// <summary>
 /// Combo lab log (measurement only): writes "CL ..." lines (see LabLine) for the local
 /// player's inputs, attack starts, ZSyncAnimation triggers, layer-0 state changes,
-/// blocking, swings and hits. Works with Enabled off. Never writes a game field, never calls a
+/// blocking, swings and hits. Works with Enabled off; needs Debug log as well as Combo lab log (LogGate). Never writes a game field, never calls a
 /// game method that caches state (Player.InAttack, IsBlocking): everything is read from
 /// fields or the Animator, or observed in a postfix of the game's own call.
 /// ff is MonoUpdaters.UpdateCount, the key Player.InAttack caches on (bumped once per
@@ -30,10 +30,16 @@ internal static class ComboLab
     private static readonly HashSet<string> Reported = new();
 
     /// <summary>Cheap check first in every lab hook.</summary>
-    internal static bool On => Settings.ComboLabLog && ReviewLog.Log != null;
+    internal static bool On =>
+        ReviewLog.Log != null && LogGate.Allows(LogKind.Lab, Plugin.Current.DebugLog, Settings.ComboLabLog);
 
-    internal static void Write(string ev, params (string k, string v)[] kv) =>
-        ReviewLog.Log?.LogInfo(LabLine.Format(Time.time, Time.frameCount, MonoUpdaters.UpdateCount, ev, kv));
+    internal static void Write(string ev, params (string k, string v)[] kv)
+    {
+        if (On)
+        {
+            ReviewLog.Log!.LogInfo(LabLine.Format(Time.time, Time.frameCount, MonoUpdaters.UpdateCount, ev, kv));
+        }
+    }
 
     /// <summary>The local player, or null; forgets the remembered values when it changes.</summary>
     internal static Player? Local()

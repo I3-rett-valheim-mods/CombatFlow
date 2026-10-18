@@ -60,7 +60,8 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
 | Advanced | Cancel emote | NoNoNo | The emote played under the hood, `NoNoNo` or `Cheer`. |
 | Advanced | Delay after hit (s) | 0 | Seconds to wait after the hit before cancelling, 0 to 0.3. |
-| Advanced | Debug log | false | Log the time of every damage event and cancel. |
+| Advanced | Debug log | false | Log the time of every damage event and cancel. While it is off, the mod writes nothing to the log apart from its startup line and errors. |
+| Advanced | Combo lab log | false | Detailed measurement log for bug reports. Needs Debug log on as well. |
 
 ## How much faster
 
@@ -80,7 +81,8 @@ Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges t
 secondary (the chain swings are part of it), so stamina stays flat while you hold the button.
 To measure it yourself, turn on **Debug log**, switch the per-weapon cancel options off for a
 vanilla run, and compare the timestamps of the damage events. **Combo lab log** (Advanced)
-writes much more detail, but it is a debugging aid for bug reports, not something to leave on.
+writes much more detail (it needs Debug log on as well), but it is a debugging aid for bug
+reports, not something to leave on.
 
 ## Multiplayer
 

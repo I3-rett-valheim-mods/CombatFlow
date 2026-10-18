@@ -74,9 +74,9 @@ internal static class Settings
                 new AcceptableValueRange<float>(0f, 0.3f),
                 new ConfigurationManagerAttributes { Order = 90, IsAdvanced = true }));
         _debugLog = config.Bind("Advanced", "Debug log", d.DebugLog,
-            Describe("Log the timestamp of every damage event and cancel, for measuring DPS.", 80, advanced: true));
-        _comboLab = config.Bind("Advanced", "Combo lab log", false,
-            Describe("Measurement only: log inputs, attack starts, animator states, blocking and hits of the local player (CL lines), even with Enabled off.", 70, advanced: true));
+            Describe("Log the timestamp of every damage event and cancel, for measuring DPS. Off: the mod writes nothing to the log apart from its startup line and errors. Off by default.", 80, advanced: true));
+        _comboLab = config.Bind("Advanced", "Combo lab log", LogGate.ComboLabLogDefault,
+            Describe("Measurement only: log inputs, attack starts, animator states, blocking and hits of the local player (CL lines), even with Enabled off. Needs Debug log on as well. Off by default.", 70, advanced: true));
 
         config.SettingChanged += (_, __) =>
         {
@@ -87,7 +87,7 @@ internal static class Settings
     }
 
     /// <summary>
-    /// One ev=config line (AC with Debug log, CL with Combo lab log) so log analyses can label runs
+    /// One ev=config line (AC with Debug log, CL with Debug log and Combo lab log) so log analyses can label runs
     /// by mode. Called at startup once the logger is set, and on every SettingChanged.
     /// </summary>
     internal static void LogConfig()

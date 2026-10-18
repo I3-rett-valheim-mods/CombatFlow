@@ -17,8 +17,9 @@
   faster than the game's own chain point.
 - **Dodge roll.** Ends the roll as soon as its invincibility window is over.
 - **Combo lab log.** Advanced option, off by default: a measurement log of inputs, attack
-  starts, animator states and hits, for bug reports.
+  starts, animator states and hits, for bug reports. Needs Debug log on as well.
 - **F8 toggle** with an on-screen message, and a master switch in the config.
 - Configuration through BepInEx ConfigurationManager, including the emote used under the
-  hood, a delay after the hit, and a debug log for measuring damage output.
+  hood, a delay after the hit, and a debug log for measuring damage output. With Debug log
+  off (the default) the mod only logs its startup line and errors.
 - Client-side only: the cancel touches your own animator and never sends an emote.
