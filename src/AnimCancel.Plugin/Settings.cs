@@ -21,6 +21,7 @@ internal static class Settings
     private static ConfigEntry<bool> _swordSecondary = null!;
     private static ConfigEntry<bool> _maxCombo = null!;
     private static ConfigEntry<MaxComboMode> _maxComboMode = null!;
+    private static ConfigEntry<int> _maxComboLoopCap = null!;
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _dodge = null!;
@@ -50,7 +51,12 @@ internal static class Settings
         _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
             Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Works even with Cancel secondary off. The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. Off by default.", 85));
         _maxComboMode = config.Bind("Sword", "Max combo mode", d.MaxComboMode,
-            Describe("Used when Max combo (auto) is on. Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Releasing the button cancels at the next hit (one more swing may play). After the safety cap of 40 extra swings a still-held button starts a new secondary, which costs stamina again.", 84));
+            Describe("Used when Max combo (auto) is on. Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Releasing the button cancels at the next hit (one more swing may play). After Max combo loop cap extra swings a still-held button starts a new secondary, which costs stamina again.", 84));
+        _maxComboLoopCap = config.Bind("Sword", "Max combo loop cap", d.MaxComboLoopCap,
+            new ConfigDescription(
+                "Max combo mode Loop only: how many extra swings are chained past the first pass before the run ends with a cancel, from 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap: the loop goes on until the button is released or the run is interrupted.",
+                new AcceptableValueRange<int>(MaxComboPolicy.MinLoopCap, MaxComboPolicy.MaxLoopCap),
+                new ConfigurationManagerAttributes { Order = 83 }));
 
         _axesCombo = config.Bind("Berserker axes", "Combo blows to cancel", d.AxesCombo,
             Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
@@ -137,6 +143,7 @@ internal static class Settings
             _delayAfterHit.Value,
             _debugLog.Value,
             _maxCombo.Value,
-            _maxComboMode.Value);
+            _maxComboMode.Value,
+            _maxComboLoopCap.Value);
     }
 }

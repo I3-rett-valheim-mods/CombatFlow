@@ -24,7 +24,7 @@ that does not have it.**
   primary is the three-blow sword combo. `Max combo mode` picks what follows the third
   swing: `Cycle` (default) cancels it; `Loop` keeps alternating the second and third swings
   while the secondary button is held, and cancels at the current swing's hit once it is
-  released (or after 40 extra swings).
+  released (or after `Max combo loop cap` extra swings, 40 by default).
 - **Berserker axes:** cancels after the last hit of a blow, and only when that is faster
   than the game's own chain point. The last blow of the combo and, if enabled, Cleave are
   always eligible.
@@ -54,6 +54,7 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
 | Sword | Max combo (auto) | false | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
 | Sword | Max combo mode | Cycle | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held (only the first secondary costs stamina); releasing takes effect at the next hit. |
+| Sword | Max combo loop cap | 40 | Loop mode only: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |

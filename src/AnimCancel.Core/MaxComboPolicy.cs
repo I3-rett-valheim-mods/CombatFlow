@@ -48,15 +48,20 @@ namespace AnimCancel.Core
     /// plugin sets swing_longsword1 on the local Animator, at swing_sword 1's Hit swing_longsword2,
     /// and at swing_sword 2's Hit it cancels as usual (Cycle). In Loop mode, while the secondary
     /// button is held, swing_sword 2's Hit sets swing_longsword1 again and so on, until the button
-    /// is released or <see cref="LoopCap"/> loop swings were chained, then it cancels.
+    /// is released or <see cref="CancelSettings.MaxComboLoopCap"/> loop swings were chained (0: no cap), then it cancels.
     /// </summary>
     public static class MaxComboPolicy
     {
         /// <summary>Longest wait for the next step's hit, in seconds.</summary>
         public const float Timeout = 1.0f;
 
-        /// <summary>Loop mode: swings chained past the first pass before the run ends with a cancel.</summary>
-        public const int LoopCap = 40;
+        /// <summary>Loop mode: default of Max combo loop cap, the swings chained past the first pass before
+        /// the run ends with a cancel.</summary>
+        public const int DefaultLoopCap = 40;
+
+        /// <summary>Range of Max combo loop cap; 0 means no cap.</summary>
+        public const int MinLoopCap = 0;
+        public const int MaxLoopCap = 1000;
 
         public const string SecondaryAnimation = "sword_secondary";
         public const string PrimaryAnimation = "swing_longsword";
@@ -111,13 +116,13 @@ namespace AnimCancel.Core
                 if (state.Step == 1 && firedClip == Swing1Clip)
                 {
                     // The first pass (Loop 0) runs as in Cycle; past it, a loop hit.
-                    return loop && state.Loop > 0 ? LoopHit(state, held, MaxComboAction.TriggerSwing2)
+                    return loop && state.Loop > 0 ? LoopHit(state, s, held, MaxComboAction.TriggerSwing2)
                         : MaxComboAction.TriggerSwing2;
                 }
 
                 if (state.Step == 2 && firedClip == Swing2Clip)
                 {
-                    return loop ? LoopHit(state, held, MaxComboAction.TriggerSwing1) : MaxComboAction.CancelNow;
+                    return loop ? LoopHit(state, s, held, MaxComboAction.TriggerSwing1) : MaxComboAction.CancelNow;
                 }
 
                 return MaxComboAction.None;
@@ -200,16 +205,17 @@ namespace AnimCancel.Core
             ("maxComboMode", s.MaxComboMode.ToString()),
             ("swordCombo", DebugLine.Bool(s.SwordCombo)),
             ("swordSecondary", DebugLine.Bool(s.SwordSecondary)),
+            ("maxComboLoopCap", s.MaxComboLoopCap.ToString(CultureInfo.InvariantCulture)),
         };
 
         /// <summary>Low 16 bits of an instance id, 4 hex digits.</summary>
         public static string ShortId(int id) => (id & 0xFFFF).ToString("x4", CultureInfo.InvariantCulture);
 
-        /// <summary>Loop mode, at a loop hit: the next swing while held, else a cancel.</summary>
-        private static MaxComboAction LoopHit(MaxComboState state, bool held, MaxComboAction next)
+        /// <summary>Loop mode, at a loop hit: the next swing while held and under the cap (0: none), else a cancel.</summary>
+        private static MaxComboAction LoopHit(MaxComboState state, CancelSettings s, bool held, MaxComboAction next)
         {
             if (!held) return MaxComboAction.End("released");
-            if (state.Loop >= LoopCap) return MaxComboAction.End("cap");
+            if (s.MaxComboLoopCap > 0 && state.Loop >= s.MaxComboLoopCap) return MaxComboAction.End("cap");
             return next;
         }
 

@@ -18,7 +18,8 @@ namespace AnimCancel.Core
         float DelayAfterHit,
         bool DebugLog,
         bool MaxCombo = false,
-        MaxComboMode MaxComboMode = MaxComboMode.Cycle)
+        MaxComboMode MaxComboMode = MaxComboMode.Cycle,
+        int MaxComboLoopCap = MaxComboPolicy.DefaultLoopCap)
     {
         public static CancelSettings Default { get; } = new CancelSettings(
             true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false);

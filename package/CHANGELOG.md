@@ -9,6 +9,8 @@
   plays the second and third swings of the primary combo into it, then cancels.
   `Max combo mode`: `Cycle` (default) or `Loop` (keeps alternating the second and third
   swings while the secondary button is held; only the first secondary costs stamina).
+  `Max combo loop cap` (default 40, 0 for no cap) sets how many extra swings Loop chains
+  before it cancels.
   Works with Cancel secondary off and honours Delay after hit.
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is

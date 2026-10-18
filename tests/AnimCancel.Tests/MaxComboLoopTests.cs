@@ -27,7 +27,8 @@ namespace AnimCancel.Tests
         public void Mode_defaults_to_cycle()
         {
             Assert.Equal(MaxComboMode.Cycle, CancelSettings.Default.MaxComboMode);
-            Assert.Equal(40, MaxComboPolicy.LoopCap);
+            Assert.Equal(40, MaxComboPolicy.DefaultLoopCap);
+            Assert.Equal(40, CancelSettings.Default.MaxComboLoopCap);
         }
 
         [Fact]
@@ -90,6 +91,33 @@ namespace AnimCancel.Tests
             Is(Hit(new MaxComboState(2, 7, 0f, 40), A3, held: true), MaxComboActionKind.CancelNow, "cap");
             Is(Hit(new MaxComboState(1, 7, 0f, 40), A2, held: true), MaxComboActionKind.CancelNow, "cap");
             Is(Hit(new MaxComboState(1, 7, 0f, 41), A2, held: true), MaxComboActionKind.CancelNow, "cap");
+        }
+
+        [Fact]
+        public void Cap_follows_the_setting()
+        {
+            CancelSettings five = Loop with { MaxComboLoopCap = 5 };
+            Is(Hit(new MaxComboState(1, 7, 0f, 4), A2, held: true, five), MaxComboActionKind.TriggerSwing2);
+            Is(Hit(new MaxComboState(2, 7, 0f, 5), A3, held: true, five), MaxComboActionKind.CancelNow, "cap");
+            Is(Hit(new MaxComboState(2, 7, 0f, 40), A3, held: true, Loop with { MaxComboLoopCap = 1000 }),
+                MaxComboActionKind.TriggerSwing1);
+        }
+
+        [Fact]
+        public void Cap_zero_means_no_cap()
+        {
+            CancelSettings unlimited = Loop with { MaxComboLoopCap = 0 };
+            Is(Hit(new MaxComboState(2, 7, 0f, 40), A3, held: true, unlimited), MaxComboActionKind.TriggerSwing1);
+            Is(Hit(new MaxComboState(1, 7, 0f, 5000), A2, held: true, unlimited), MaxComboActionKind.TriggerSwing2);
+            Is(Hit(new MaxComboState(2, 7, 0f, 5000), A3, held: false, unlimited), MaxComboActionKind.CancelNow, "released");
+            Is(Hit(new MaxComboState(2, 7, 0f, 5000), A3, true, unlimited, since: 1.01f), MaxComboActionKind.Abort, "timeout");
+        }
+
+        [Fact]
+        public void Cap_range_is_zero_to_a_thousand()
+        {
+            Assert.Equal(0, MaxComboPolicy.MinLoopCap);
+            Assert.Equal(1000, MaxComboPolicy.MaxLoopCap);
         }
 
         [Fact]
