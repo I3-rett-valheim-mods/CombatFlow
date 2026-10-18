@@ -13,6 +13,7 @@ internal static class Canceller
 {
     private static readonly int TagAttack = Animator.StringToHash("attack");
     private static readonly int TagEmote = Animator.StringToHash("emote");
+    private const string EmoteStop = "emote_stop";
 
     /// <summary>True from a cancel until the next attack starts or the emote is stopped.</summary>
     internal static bool InFlight;
@@ -40,6 +41,9 @@ internal static class Canceller
             ? animator.GetNextAnimatorStateInfo(0).fullPathHash
             : animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
 
+        // A previous emote_stop can stay latched when a dodge/attack wins via Any State in the
+        // same frame; it would then cut this emote on entry.
+        animator.ResetTrigger(EmoteStop);
         animator.SetTrigger(CancelEmotes.Trigger(e));
         string plan = ApplySpeedPlan(p, animator, pauseTimer);
 
@@ -75,6 +79,13 @@ internal static class Canceller
 
         InFlight = false;
         dtSinceCancel = Time.time - LastCancelTime;
+        // Do not let an unconsumed emote_stop wait for the next emote.
+        Player? p = Player.m_localPlayer;
+        if (p != null && p.m_animator != null)
+        {
+            p.m_animator.ResetTrigger(EmoteStop);
+        }
+
         return true;
     }
 
@@ -123,7 +134,7 @@ internal static class Canceller
             return;
         }
 
-        animator.SetTrigger("emote_stop");
+        animator.SetTrigger(EmoteStop);
         float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
         ApplySpeedPlan(p, animator, pauseTimer);
         InFlight = false;
