@@ -4,7 +4,7 @@ using System.Text;
 namespace AnimCancel.Core
 {
     /// <summary>
-    /// ev=attack_cleared (diagnosis only): who set Humanoid.m_currentAttack to null under a max combo run.
+    /// ev=attack_cleared (diagnosis only): who set the local player's Humanoid.m_currentAttack to null (to explain max combo instance aborts).
     /// The game does it in two places, Humanoid.UnequipItem (the attack's weapon) and Humanoid.StartAttack
     /// (before Attack.Start, which may then fail).
     /// </summary>
@@ -21,7 +21,7 @@ namespace AnimCancel.Core
 
         /// <summary>
         /// Up to <paramref name="max"/> calling methods as Type.Method joined by '>', innermost first, skipping
-        /// frames without a type (Harmony's patched copies), the mod's own, Harmony's and MonoMod's. "-" if none.
+        /// frames without a type or named DMD&lt;...&gt; (Harmony's patched copies), the mod's own, Harmony's and MonoMod's. "-" if none.
         /// </summary>
         public static string Callers(IEnumerable<(string? ns, string? type, string? method)> frames, int max)
         {
@@ -34,7 +34,9 @@ namespace AnimCancel.Core
                     break;
                 }
 
-                if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(method) || Skipped(ns))
+                if (string.IsNullOrEmpty(type) || string.IsNullOrEmpty(method) || Skipped(ns)
+                    || type!.StartsWith("DMD<", System.StringComparison.Ordinal)
+                    || method!.StartsWith("DMD<", System.StringComparison.Ordinal))
                 {
                     continue;
                 }

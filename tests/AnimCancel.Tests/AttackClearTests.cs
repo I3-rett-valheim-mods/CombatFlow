@@ -13,6 +13,8 @@ namespace AnimCancel.Tests
             {
                 ("AnimCancel.Patches", "UnequipPatch", "Prefix"),
                 (null, null, "DMD<Humanoid::UnequipItem>"),
+                (null, "DMD<Humanoid::StartAttack>", "Humanoid::StartAttack"),
+                ("", "Humanoid", "DMD<Humanoid::UnequipItem>"),
                 ("HarmonyLib", "Traverse", "Call"),
                 ("MonoMod.Utils", "DynamicMethodDefinition", "Generate"),
                 ("", "Humanoid", "UnequipAllItems"),
