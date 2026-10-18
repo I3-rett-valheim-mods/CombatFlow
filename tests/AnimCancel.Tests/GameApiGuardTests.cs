@@ -520,6 +520,43 @@ public class GameApiGuardTests
     }
 
     [Fact]
+    public void Player_GetStamina_returns_m_stamina()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // MaxComboRun logs stamina=<Player.GetStamina()> on every maxcombo line.
+        MethodDefinition method = GameAssembly.Method("Player", "GetStamina");
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Empty(method.Parameters);
+        Assert.Equal("System.Single", method.ReturnType.FullName);
+        string[] operands = method.Body.Instructions.Select(i => i.Operand?.ToString() ?? "").ToArray();
+        Assert.Contains(operands, o => o.Contains("Player::m_stamina"));
+    }
+
+    [Fact]
+    public void Attack_Update_stops_only_when_InAttack_drops_or_on_abort()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // Loop mode keeps one secondary Attack current for many swings: Update must end it only
+        // through Stop() (InAttack false, or m_abortAttack), never on its own clock.
+        MethodDefinition method = GameAssembly.Method("Attack", "Update", "Single");
+        string[] operands = method.Body.Instructions.Select(i => i.Operand?.ToString() ?? "").ToArray();
+
+        Assert.Single(operands, o => o.Contains("Attack::Stop"));
+        Assert.Contains(operands, o => o.Contains("Character::InAttack"));
+        Assert.Contains(operands, o => o.Contains("Attack::m_abortAttack"));
+        Assert.DoesNotContain(operands, o => o.Contains("Attack::Start"));
+    }
+
+    [Fact]
     public void Humanoid_StartAttack_second_parameter_is_secondaryAttack()
     {
         if (!GameAssembly.IsAvailable)

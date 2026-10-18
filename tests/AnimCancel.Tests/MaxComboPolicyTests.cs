@@ -185,10 +185,10 @@ namespace AnimCancel.Tests
         public void Config_fields_label_the_mode()
         {
             Assert.Equal(
-                new[] { ("enabled", "true"), ("maxCombo", "false"), ("swordCombo", "true"), ("swordSecondary", "true") },
+                new[] { ("enabled", "true"), ("maxCombo", "false"), ("maxComboMode", "Cycle"), ("swordCombo", "true"), ("swordSecondary", "true") },
                 MaxComboPolicy.ConfigFields(CancelSettings.Default));
             Assert.Equal(
-                new[] { ("enabled", "false"), ("maxCombo", "true"), ("swordCombo", "false"), ("swordSecondary", "false") },
+                new[] { ("enabled", "false"), ("maxCombo", "true"), ("maxComboMode", "Cycle"), ("swordCombo", "false"), ("swordSecondary", "false") },
                 MaxComboPolicy.ConfigFields(On with { Enabled = false, SwordCombo = false, SwordSecondary = false }));
         }
 
@@ -196,9 +196,9 @@ namespace AnimCancel.Tests
         public void Config_line_formats_as_ac_and_cl()
         {
             var kv = MaxComboPolicy.ConfigFields(On);
-            Assert.Equal("AC t=1.000 f=2 ev=config enabled=true maxCombo=true swordCombo=true swordSecondary=true",
+            Assert.Equal("AC t=1.000 f=2 ev=config enabled=true maxCombo=true maxComboMode=Cycle swordCombo=true swordSecondary=true",
                 DebugLine.Format(1, 2, "config", kv));
-            Assert.Equal("CL t=1.000 f=2 ff=3 ev=config enabled=true maxCombo=true swordCombo=true swordSecondary=true",
+            Assert.Equal("CL t=1.000 f=2 ff=3 ev=config enabled=true maxCombo=true maxComboMode=Cycle swordCombo=true swordSecondary=true",
                 LabLine.Format(1, 2, 3, "config", kv));
         }
     }

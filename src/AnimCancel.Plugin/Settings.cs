@@ -20,6 +20,7 @@ internal static class Settings
     private static ConfigEntry<bool> _swordCombo = null!;
     private static ConfigEntry<bool> _swordSecondary = null!;
     private static ConfigEntry<bool> _maxCombo = null!;
+    private static ConfigEntry<MaxComboMode> _maxComboMode = null!;
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _dodge = null!;
@@ -47,7 +48,9 @@ internal static class Settings
         _swordSecondary = config.Bind("Sword", "Cancel secondary", d.SwordSecondary,
             Describe("Cut the recovery after the sword secondary attack.", 90));
         _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
-            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel. Off by default.", 85));
+            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Needs a sword whose primary is the three-swing combo. Off by default.", 85));
+        _maxComboMode = config.Bind("Sword", "Max combo mode", d.MaxComboMode,
+            Describe("Used when Max combo (auto) is on. Cycle: secondary, second swing, third swing, then cancel. Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; releasing it cancels at the current swing's hit (at most 40 extra swings).", 84));
 
         _axesCombo = config.Bind("Berserker axes", "Combo blows to cancel", d.AxesCombo,
             Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
@@ -133,6 +136,7 @@ internal static class Settings
             _emote.Value,
             _delayAfterHit.Value,
             _debugLog.Value,
-            _maxCombo.Value);
+            _maxCombo.Value,
+            _maxComboMode.Value);
     }
 }

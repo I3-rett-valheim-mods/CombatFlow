@@ -8,7 +8,8 @@ namespace AnimCancel.Core
     {
         public MaxComboActionKind Kind { get; }
 
-        /// <summary>Abort reason (disabled|instance|stagger|dodge|timeout), empty otherwise.</summary>
+        /// <summary>Abort reason (disabled|instance|stagger|dodge|timeout), Loop end reason on a CancelNow
+        /// (released|cap), empty otherwise.</summary>
         public string Reason { get; }
 
         private MaxComboAction(MaxComboActionKind kind, string reason)
@@ -22,14 +23,18 @@ namespace AnimCancel.Core
         public static MaxComboAction TriggerSwing2 => new(MaxComboActionKind.TriggerSwing2, "");
         public static MaxComboAction CancelNow => new(MaxComboActionKind.CancelNow, "");
         public static MaxComboAction Abort(string reason) => new(MaxComboActionKind.Abort, reason);
+
+        /// <summary>Loop mode: end the run with a normal cancel at this hit (released|cap).</summary>
+        public static MaxComboAction End(string reason) => new(MaxComboActionKind.CancelNow, reason);
     }
 
     /// <summary>
     /// A max combo run: Step 0 idle, 1 once swing_longsword1 was set, 2 once swing_longsword2 was set.
     /// InstanceId identifies the secondary Attack the run belongs to (log only); StepTime is the
-    /// Time.time of the last step.
+    /// Time.time of the last step. Loop counts the swings Loop mode chained past the first pass
+    /// (0 during the first pass and in Cycle mode).
     /// </summary>
-    public sealed record MaxComboState(int Step, int InstanceId, float StepTime)
+    public sealed record MaxComboState(int Step, int InstanceId, float StepTime, int Loop = 0)
     {
         public static MaxComboState Idle { get; } = new(0, 0, 0f);
 
@@ -41,12 +46,17 @@ namespace AnimCancel.Core
     /// of the swing_sword 1 and swing_sword 2 clips go to it (Humanoid.OnAttackTrigger hands every hit
     /// to m_currentAttack), so each hits at the secondary's multiplier. At the secondary's Hit the
     /// plugin sets swing_longsword1 on the local Animator, at swing_sword 1's Hit swing_longsword2,
-    /// and at swing_sword 2's Hit it cancels as usual.
+    /// and at swing_sword 2's Hit it cancels as usual (Cycle). In Loop mode, while the secondary
+    /// button is held, swing_sword 2's Hit sets swing_longsword1 again and so on, until the button
+    /// is released or <see cref="LoopCap"/> loop swings were chained, then it cancels.
     /// </summary>
     public static class MaxComboPolicy
     {
         /// <summary>Longest wait for the next step's hit, in seconds.</summary>
         public const float Timeout = 1.0f;
+
+        /// <summary>Loop mode: swings chained past the first pass before the run ends with a cancel.</summary>
+        public const int LoopCap = 40;
 
         public const string SecondaryAnimation = "sword_secondary";
         public const string PrimaryAnimation = "swing_longsword";
@@ -76,9 +86,10 @@ namespace AnimCancel.Core
         public static bool Routes(AttackKind kind, CancelSettings s, bool eligible)
             => s.Enabled && s.MaxCombo && kind == AttackKind.SwordSecondary && eligible;
 
-        /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).</summary>
+        /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).
+        /// <paramref name="held"/>: the secondary button is held (Loop mode only).</summary>
         public static MaxComboAction Decide(MaxComboState state, string? firedClip, bool sameInstance,
-            CancelSettings s, float sinceLastStep, bool eligible, bool staggering)
+            CancelSettings s, float sinceLastStep, bool eligible, bool staggering, bool held = false)
         {
             bool on = s.Enabled && s.MaxCombo;
             if (state.Running)
@@ -89,8 +100,19 @@ namespace AnimCancel.Core
                     return abort;
                 }
 
-                if (state.Step == 1 && firedClip == Swing1Clip) return MaxComboAction.TriggerSwing2;
-                if (state.Step == 2 && firedClip == Swing2Clip) return MaxComboAction.CancelNow;
+                bool loop = s.MaxComboMode == MaxComboMode.Loop;
+                if (state.Step == 1 && firedClip == Swing1Clip)
+                {
+                    // The first pass (Loop 0) runs as in Cycle; past it, a loop hit.
+                    return loop && state.Loop > 0 ? LoopHit(state, held, MaxComboAction.TriggerSwing2)
+                        : MaxComboAction.TriggerSwing2;
+                }
+
+                if (state.Step == 2 && firedClip == Swing2Clip)
+                {
+                    return loop ? LoopHit(state, held, MaxComboAction.TriggerSwing1) : MaxComboAction.CancelNow;
+                }
+
                 return MaxComboAction.None;
             }
 
@@ -113,8 +135,13 @@ namespace AnimCancel.Core
         {
             switch (a.Kind)
             {
-                case MaxComboActionKind.TriggerSwing1: return new MaxComboState(1, instanceId, now);
-                case MaxComboActionKind.TriggerSwing2: return new MaxComboState(2, state.InstanceId, now);
+                case MaxComboActionKind.TriggerSwing1:
+                    // From idle a new run; from swing_sword 2 (Loop) the same run, one more loop swing.
+                    return state.Running
+                        ? new MaxComboState(1, state.InstanceId, now, state.Loop + 1)
+                        : new MaxComboState(1, instanceId, now);
+                case MaxComboActionKind.TriggerSwing2:
+                    return new MaxComboState(2, state.InstanceId, now, state.Loop > 0 ? state.Loop + 1 : 0);
                 case MaxComboActionKind.CancelNow:
                 case MaxComboActionKind.Abort: return MaxComboState.Idle;
                 default: return state;
@@ -144,6 +171,17 @@ namespace AnimCancel.Core
             ("attack", ShortId(instanceId)),
         };
 
+        /// <summary>Keys added to every ev=maxcombo / maxcombo_end / maxcombo_abort line.</summary>
+        public static (string k, string v)[] RunFields(int loop, string? plan, float stamina) => new[]
+        {
+            ("loop", loop.ToString(CultureInfo.InvariantCulture)),
+            ("plan", string.IsNullOrEmpty(plan) ? "-" : plan!),
+            ("stamina", stamina.ToString("0.0", CultureInfo.InvariantCulture)),
+        };
+
+        /// <summary>ev=maxcombo_end keys (Loop mode ended with a cancel).</summary>
+        public static (string k, string v)[] EndFields(string reason) => new[] { ("reason", reason) };
+
         /// <summary>ev=maxcombo_abort keys.</summary>
         public static (string k, string v)[] AbortFields(string reason) => new[] { ("reason", reason) };
 
@@ -152,12 +190,21 @@ namespace AnimCancel.Core
         {
             ("enabled", DebugLine.Bool(s.Enabled)),
             ("maxCombo", DebugLine.Bool(s.MaxCombo)),
+            ("maxComboMode", s.MaxComboMode.ToString()),
             ("swordCombo", DebugLine.Bool(s.SwordCombo)),
             ("swordSecondary", DebugLine.Bool(s.SwordSecondary)),
         };
 
         /// <summary>Low 16 bits of an instance id, 4 hex digits.</summary>
         public static string ShortId(int id) => (id & 0xFFFF).ToString("x4", CultureInfo.InvariantCulture);
+
+        /// <summary>Loop mode, at a loop hit: the next swing while held, else a cancel.</summary>
+        private static MaxComboAction LoopHit(MaxComboState state, bool held, MaxComboAction next)
+        {
+            if (!held) return MaxComboAction.End("released");
+            if (state.Loop >= LoopCap) return MaxComboAction.End("cap");
+            return next;
+        }
 
         private static MaxComboAction AbortReason(bool on, bool sameInstance, bool staggering, bool dodging, float since)
         {
