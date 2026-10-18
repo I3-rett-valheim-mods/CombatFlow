@@ -137,7 +137,7 @@ internal static class Canceller
             bool nextIsEmote = inTransition && animator.GetNextAnimatorStateInfo(0).tagHash == TagEmote;
             if (RecoveryPolicy.StopOnDisable(InFlight, currentIsEmote, nextIsEmote))
             {
-                StopEmote(p, animator);
+                SendEmoteStop(p, animator);
                 if (ReviewLog.On)
                 {
                     ReviewLog.Write("recovery_stop",
@@ -231,7 +231,7 @@ internal static class Canceller
 
         if (d.Action == RecoveryAction.Stop)
         {
-            StopEmote(p, animator);
+            SendEmoteStop(p, animator);
         }
 
         ResetEmoteTrigger(animator);
@@ -256,7 +256,7 @@ internal static class Canceller
     }
 
     /// <summary>Local emote_stop, then the speed plan again (restore if hit-stop is still running).</summary>
-    private static void StopEmote(Player p, Animator animator)
+    private static void SendEmoteStop(Player p, Animator animator)
     {
         animator.SetTrigger(EmoteStop);
         float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
