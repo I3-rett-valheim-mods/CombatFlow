@@ -52,6 +52,8 @@ parried as a perfect block, even mid-attack and without the block button. It blo
 game blocks with (shield, weapon or bare hands); hits from behind and hits during a dodge are taken as usual. The rest is the
 game's own block: stamina cost, guard break when out of stamina, attacker stagger, skill and
 effects. It applies to every attacker, creatures and players alike, and is off whenever the mod is.
+Only the block button and the mid-attack rule are skipped: as in vanilla, there is no block while
+staggered, encumbered, in build mode or during a minor action.
 
 ## Configuration
 

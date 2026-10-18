@@ -114,6 +114,9 @@ public class AutoParryGuardTests
     [Theory]
     [InlineData("Player", "InDodge")]
     [InlineData("Player", "IsDodgeInvincible")]
+    [InlineData("Player", "InPlaceMode")]
+    [InlineData("Player", "IsEncumbered")]
+    [InlineData("Player", "InMinorAction")]
     public void Dodge_queries_are_Player_overrides(string typeName, string methodName)
     {
         if (!GameAssembly.IsAvailable)
@@ -171,5 +174,47 @@ public class AutoParryGuardTests
         TypeDefinition shared = itemData.NestedTypes.First(t => t.Name == "SharedData");
         Assert.Equal("System.Single", shared.Fields.First(f => f.Name == "m_timedBlockBonus").FieldType.FullName);
         Assert.Equal("SharedData", itemData.Fields.First(f => f.Name == "m_shared").FieldType.Name);
+    }
+
+    [Fact]
+    public void Humanoid_IsBlocking_still_has_the_vanilla_rules_the_forced_value_mirrors()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // m_blocking && !InAttack() && !InDodge() && !InPlaceMode() && !IsEncumbered() && !InMinorAction()
+        // ? !IsStaggering() : false; the forced value drops only the first two. Order matters (short-circuit).
+        string[] ops = Operands(GameAssembly.Method("Humanoid", "IsBlocking"));
+        string[] calls =
+        {
+            "::m_blocking", "::InAttack()", "::InDodge()", "::InPlaceMode()", "::IsEncumbered()",
+            "::InMinorAction()", "::IsStaggering()",
+        };
+        int last = -1;
+        foreach (string c in calls)
+        {
+            int i = System.Array.FindIndex(ops, o => o.Contains(c));
+            Assert.True(i > last, $"Humanoid.IsBlocking: {c} missing or out of order ({i} after {last}).");
+            last = i;
+        }
+
+        Assert.Equal(calls.Length, ops.Count(o => calls.Any(o.Contains)));
+        Assert.Contains(ops, o => o.Contains("ZNetView::IsOwner"));
+        Assert.Contains(ops, o => o.Contains("ZDOVars::s_isBlockingHash"));
+    }
+
+    [Fact]
+    public void Character_m_nview_is_a_ZNetView()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        Assert.Equal("ZNetView", GameAssembly.Field("Character", "m_nview").FieldType.Name);
+        Assert.True(GameAssembly.Method("ZNetView", "IsValid").IsPublic);
+        Assert.True(GameAssembly.Method("ZNetView", "IsOwner").IsPublic);
     }
 }
