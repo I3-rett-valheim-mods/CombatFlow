@@ -13,7 +13,8 @@ namespace AnimCancel.Core
         bool Dodge,
         CancelEmote Emote,
         float DelayAfterHit,
-        bool DebugLog)
+        bool DebugLog,
+        bool MaxCombo = false)
     {
         public static CancelSettings Default { get; } = new CancelSettings(
             true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false);

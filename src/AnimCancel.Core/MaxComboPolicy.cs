@@ -1,0 +1,172 @@
+using System.Globalization;
+
+namespace AnimCancel.Core
+{
+    public enum MaxComboActionKind { None, TriggerSwing1, TriggerSwing2, CancelNow, Abort }
+
+    public readonly struct MaxComboAction
+    {
+        public MaxComboActionKind Kind { get; }
+
+        /// <summary>Abort reason (disabled|instance|stagger|dodge|timeout), empty otherwise.</summary>
+        public string Reason { get; }
+
+        private MaxComboAction(MaxComboActionKind kind, string reason)
+        {
+            Kind = kind;
+            Reason = reason;
+        }
+
+        public static MaxComboAction None => new(MaxComboActionKind.None, "");
+        public static MaxComboAction TriggerSwing1 => new(MaxComboActionKind.TriggerSwing1, "");
+        public static MaxComboAction TriggerSwing2 => new(MaxComboActionKind.TriggerSwing2, "");
+        public static MaxComboAction CancelNow => new(MaxComboActionKind.CancelNow, "");
+        public static MaxComboAction Abort(string reason) => new(MaxComboActionKind.Abort, reason);
+    }
+
+    /// <summary>
+    /// A max combo run: Step 0 idle, 1 once swing_longsword1 was set, 2 once swing_longsword2 was set.
+    /// InstanceId identifies the secondary Attack the run belongs to (log only); StepTime is the
+    /// Time.time of the last step.
+    /// </summary>
+    public sealed record MaxComboState(int Step, int InstanceId, float StepTime)
+    {
+        public static MaxComboState Idle { get; } = new(0, 0, 0f);
+
+        public bool Running => Step > 0;
+    }
+
+    /// <summary>
+    /// Max combo (auto), from lab run 2: while the sword secondary Attack is current, the Hit events
+    /// of the swing_sword 1 and swing_sword 2 clips go to it (Humanoid.OnAttackTrigger hands every hit
+    /// to m_currentAttack), so each hits at the secondary's multiplier. At the secondary's Hit the
+    /// plugin sets swing_longsword1 on the local Animator, at swing_sword 1's Hit swing_longsword2,
+    /// and at swing_sword 2's Hit it cancels as usual.
+    /// </summary>
+    public static class MaxComboPolicy
+    {
+        /// <summary>Longest wait for the next step's hit, in seconds.</summary>
+        public const float Timeout = 1.0f;
+
+        public const string SecondaryAnimation = "sword_secondary";
+        public const string PrimaryAnimation = "swing_longsword";
+        public const int MinPrimaryLevels = 3;
+
+        // Clips of the sword_secondary, swing_sword 1 and swing_sword 2 states.
+        public const string SecondaryClip = "Sword-Attack-R4";
+        public const string Swing1Clip = "Attack2";
+        public const string Swing2Clip = "Attack3";
+
+        public const string Swing1Trigger = "swing_longsword1";
+        public const string Swing2Trigger = "swing_longsword2";
+
+        /// <summary>Reset before a step's trigger is set, so no stale chain trigger cuts in.</summary>
+        public static readonly string[] SwingTriggers = { "swing_longsword0", Swing1Trigger, Swing2Trigger };
+
+        /// <summary>Reset on abort.</summary>
+        public static readonly string[] AbortTriggers = { Swing1Trigger, Swing2Trigger };
+
+        /// <summary>The current attack is the sword secondary and the weapon's primary is the 3-level longsword combo.</summary>
+        public static bool Eligible(string? attackAnimation, string? primaryAnimation, int primaryChainLevels)
+            => attackAnimation == SecondaryAnimation
+               && primaryAnimation == PrimaryAnimation
+               && primaryChainLevels >= MinPrimaryLevels;
+
+        /// <summary>The hit is handled by max combo instead of the plain cancel policy.</summary>
+        public static bool Routes(AttackKind kind, CancelSettings s, bool eligible)
+            => s.Enabled && s.MaxCombo && kind == AttackKind.SwordSecondary && eligible;
+
+        /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).</summary>
+        public static MaxComboAction Decide(MaxComboState state, string? firedClip, bool sameInstance,
+            CancelSettings s, float sinceLastStep, bool eligible, bool staggering)
+        {
+            bool on = s.Enabled && s.MaxCombo;
+            if (state.Running)
+            {
+                MaxComboAction abort = AbortReason(on, sameInstance, staggering, false, sinceLastStep);
+                if (abort.Kind == MaxComboActionKind.Abort)
+                {
+                    return abort;
+                }
+
+                if (state.Step == 1 && firedClip == Swing1Clip) return MaxComboAction.TriggerSwing2;
+                if (state.Step == 2 && firedClip == Swing2Clip) return MaxComboAction.CancelNow;
+                return MaxComboAction.None;
+            }
+
+            if (!on || !eligible || staggering || firedClip != SecondaryClip)
+            {
+                return MaxComboAction.None;
+            }
+
+            return MaxComboAction.TriggerSwing1;
+        }
+
+        /// <summary>Every frame while a run is going: abort when it can no longer complete.</summary>
+        public static MaxComboAction Watch(MaxComboState state, bool sameInstance, CancelSettings s,
+            float sinceLastStep, bool staggering, bool dodging)
+            => state.Running
+                ? AbortReason(s.Enabled && s.MaxCombo, sameInstance, staggering, dodging, sinceLastStep)
+                : MaxComboAction.None;
+
+        public static MaxComboState Next(MaxComboState state, MaxComboAction a, int instanceId, float now)
+        {
+            switch (a.Kind)
+            {
+                case MaxComboActionKind.TriggerSwing1: return new MaxComboState(1, instanceId, now);
+                case MaxComboActionKind.TriggerSwing2: return new MaxComboState(2, state.InstanceId, now);
+                case MaxComboActionKind.CancelNow:
+                case MaxComboActionKind.Abort: return MaxComboState.Idle;
+                default: return state;
+            }
+        }
+
+        public static int StepNumber(MaxComboActionKind k) => k switch
+        {
+            MaxComboActionKind.TriggerSwing1 => 1,
+            MaxComboActionKind.TriggerSwing2 => 2,
+            MaxComboActionKind.CancelNow => 3,
+            _ => 0,
+        };
+
+        public static string? TriggerFor(MaxComboActionKind k) => k switch
+        {
+            MaxComboActionKind.TriggerSwing1 => Swing1Trigger,
+            MaxComboActionKind.TriggerSwing2 => Swing2Trigger,
+            _ => null,
+        };
+
+        /// <summary>ev=maxcombo keys.</summary>
+        public static (string k, string v)[] StepFields(int step, string? clip, int instanceId) => new[]
+        {
+            ("step", step.ToString(CultureInfo.InvariantCulture)),
+            ("clip", string.IsNullOrEmpty(clip) ? "-" : clip!),
+            ("attack", ShortId(instanceId)),
+        };
+
+        /// <summary>ev=maxcombo_abort keys.</summary>
+        public static (string k, string v)[] AbortFields(string reason) => new[] { ("reason", reason) };
+
+        /// <summary>ev=config keys: what labels a run (vanilla / cancel / maxcombo) in the log analysis.</summary>
+        public static (string k, string v)[] ConfigFields(CancelSettings s) => new[]
+        {
+            ("enabled", DebugLine.Bool(s.Enabled)),
+            ("maxCombo", DebugLine.Bool(s.MaxCombo)),
+            ("swordCombo", DebugLine.Bool(s.SwordCombo)),
+            ("swordSecondary", DebugLine.Bool(s.SwordSecondary)),
+        };
+
+        /// <summary>Low 16 bits of an instance id, 4 hex digits.</summary>
+        public static string ShortId(int id) => (id & 0xFFFF).ToString("x4", CultureInfo.InvariantCulture);
+
+        private static MaxComboAction AbortReason(bool on, bool sameInstance, bool staggering, bool dodging, float since)
+        {
+            if (!on) return MaxComboAction.Abort("disabled");
+            if (!sameInstance) return MaxComboAction.Abort("instance");
+            if (staggering) return MaxComboAction.Abort("stagger");
+            if (dodging) return MaxComboAction.Abort("dodge");
+            if (since > Timeout) return MaxComboAction.Abort("timeout");
+            return MaxComboAction.None;
+        }
+    }
+}

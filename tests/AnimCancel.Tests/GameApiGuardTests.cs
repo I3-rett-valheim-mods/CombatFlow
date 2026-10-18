@@ -452,6 +452,73 @@ public class GameApiGuardTests
         Assert.Equal("System.Boolean", method.Parameters[index].ParameterType.FullName);
     }
 
+    // ----- Max combo (auto) ----------------------------------------------------
+
+    [Fact]
+    public void Humanoid_GetCurrentWeapon_returns_ItemDrop_ItemData()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        Assert.Equal("ItemDrop/ItemData", GameAssembly.Method("Humanoid", "GetCurrentWeapon").ReturnType.FullName);
+    }
+
+    [Fact]
+    public void ItemData_m_shared_m_attack_is_the_primary_Attack()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // MaxComboRun reads GetCurrentWeapon().m_shared.m_attack (the primary attack Humanoid.StartAttack clones).
+        TypeDefinition itemData = GameAssembly.NestedType("ItemDrop", "ItemData");
+        FieldDefinition shared = itemData.Fields.Single(f => f.Name == "m_shared");
+        Assert.False(shared.IsStatic);
+        Assert.Equal("ItemDrop/ItemData/SharedData", shared.FieldType.FullName);
+
+        TypeDefinition sharedData = itemData.NestedTypes.Single(t => t.Name == "SharedData");
+        FieldDefinition attack = sharedData.Fields.Single(f => f.Name == "m_attack");
+        Assert.False(attack.IsStatic);
+        Assert.Equal("Attack", attack.FieldType.FullName);
+    }
+
+    [Fact]
+    public void Humanoid_OnAttackTrigger_still_hands_the_hit_to_m_currentAttack()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // The triple heavy relies on the swing_sword 1/2 hits going to the current (secondary) Attack.
+        MethodDefinition method = GameAssembly.Method("Humanoid", "OnAttackTrigger");
+        string[] operands = method.Body.Instructions.Select(i => i.Operand?.ToString() ?? "").ToArray();
+
+        Assert.Contains(operands, o => o.Contains("Humanoid::m_currentAttack"));
+        Assert.Contains(operands, o => o.Contains("Attack::OnAttackTrigger"));
+    }
+
+    [Fact]
+    public void Attack_Update_uses_stamina_only_on_entering_the_attack()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // Stamina is spent once, guarded by m_wasInAttack; Stop() runs when InAttack goes false.
+        MethodDefinition method = GameAssembly.Method("Attack", "Update", "Single");
+        string[] operands = method.Body.Instructions.Select(i => i.Operand?.ToString() ?? "").ToArray();
+
+        Assert.Contains(operands, o => o.Contains("Attack::m_wasInAttack"));
+        Assert.Contains(operands, o => o.Contains("Character::UseStamina"));
+        Assert.Contains(operands, o => o.Contains("Attack::Stop"));
+        Assert.Single(operands, o => o.Contains("Character::UseStamina"));
+    }
+
     [Fact]
     public void Humanoid_StartAttack_second_parameter_is_secondaryAttack()
     {

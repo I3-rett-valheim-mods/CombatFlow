@@ -21,6 +21,7 @@ namespace AnimCancel.Tests
             Assert.Equal(CancelEmote.NoNoNo, d.Emote);
             Assert.Equal(0f, d.DelayAfterHit);
             Assert.False(d.DebugLog, nameof(d.DebugLog));
+            Assert.False(d.MaxCombo, nameof(d.MaxCombo));
         }
     }
 }

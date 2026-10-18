@@ -5,6 +5,8 @@
 - First release.
 - **Sword.** Cuts the recovery after each blow of the primary combo and after the
   secondary attack, right after the hit lands. Hold attack to chain.
+- **Sword, Max combo (auto).** Optional, off by default: after the secondary attack lands,
+  plays the second and third swings of the primary combo into it, then cancels.
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
   faster than the game's own chain point.

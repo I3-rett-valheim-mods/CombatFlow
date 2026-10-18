@@ -67,7 +67,11 @@ internal static class AttackTracker
                                 out string clipPick)
                             ?? NoTiming;
         int lvl = atk.m_currentAttackCainLevel;
-        CancelDecision d = CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, seen, stateSpeed, s);
+        // Max combo (option on, sword secondary) replaces the plain policy: steps 1-2 never cancel, step 3 does.
+        bool clipIsNext = clipPick == ClipPick.LogValue(ClipPickResult.Next);
+        CancelDecision d = MaxComboRun.OnHit(player, atk, kind, s, clip, clipIsNext, out bool maxComboCancel)
+            ? new CancelDecision(maxComboCancel, maxComboCancel ? "ok" : "maxcombo")
+            : CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, seen, stateSpeed, s);
         if (s.DelayAfterHit <= 0f)
         {
             // The delayed path checks the stagger at its due time instead.
@@ -122,6 +126,9 @@ internal static class AttackTracker
 
     private static void TickCore()
     {
+        // First, so a run is aborted (reason disabled) when the mod is turned off.
+        MaxComboRun.Tick(Plugin.Current);
+
         if (!Plugin.Current.Enabled)
         {
             // Disabled: nothing may stay pending, or the first relaunch after re-enabling

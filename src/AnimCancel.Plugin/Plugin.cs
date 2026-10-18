@@ -19,6 +19,7 @@ public sealed class Plugin : BaseUnityPlugin
         _harmony = new Harmony(PluginInfo.Guid);
         _harmony.PatchAll();
         Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded");
+        Settings.LogConfig();
     }
 
     private void OnDestroy() => _harmony?.UnpatchSelf();

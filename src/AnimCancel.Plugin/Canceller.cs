@@ -95,6 +95,43 @@ internal static class Canceller
     }
 
     /// <summary>
+    /// Max combo step: sets a sword chain trigger on the local Animator only (never ZSyncAnimation,
+    /// no StartAttack, so the secondary Attack stays current) after resetting stale emote and chain
+    /// triggers, and applies the speed plan of a cancel. The state that fired the hit becomes the
+    /// cancelled state, so its trailing Speed events are skipped during the blend (SpeedSkip, R13).
+    /// Returns the speed plan, or null without an Animator.
+    /// </summary>
+    /// <param name="useNext">The hit came from layer 0's next state (ClipPick "next").</param>
+    internal static string? Chain(Player p, string trigger, bool useNext, string[] staleTriggers)
+    {
+        Animator animator = p.m_animator;
+        if (animator == null)
+        {
+            return null;
+        }
+
+        float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
+        CancelledState = useNext && animator.IsInTransition(0)
+            ? animator.GetNextAnimatorStateInfo(0).fullPathHash
+            : animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+        Relaunched = false;
+        LiftBlock("cancel");
+
+        animator.ResetTrigger(EmoteStop);
+        ResetEmoteTrigger(animator);
+        foreach (string t in staleTriggers)
+        {
+            animator.ResetTrigger(t);
+        }
+
+        animator.SetTrigger(trigger);
+        string plan = ApplySpeedPlan(p, animator, pauseTimer);
+        // Starts the SpeedSkip window; InFlight stays as it is (no emote was set).
+        LastCancelTime = Time.time;
+        return plan;
+    }
+
+    /// <summary>
     /// Called on the first attack start after a cancel: ends the in-flight state and
     /// gives the time since the cancel.
     /// </summary>

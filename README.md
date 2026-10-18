@@ -17,6 +17,11 @@ that does not have it.**
 
 - **Sword, primary combo:** cancels the recovery after each blow, right after the hit.
 - **Sword, secondary:** cancels the recovery after the blow.
+- **Sword, max combo (optional, off by default):** when the secondary attack lands, the
+  mod plays the second and third swings of the primary combo straight after it, on your
+  own animator, then cancels the recovery as usual. The game counts those swings as part of
+  the secondary attack. Stamina is spent once, for the secondary. Only for weapons whose
+  primary is the three-blow sword combo.
 - **Berserker axes:** cancels after the last hit of a blow, and only when that is faster
   than the game's own chain point. The last blow of the combo and, if enabled, Cleave are
   always eligible.
@@ -44,6 +49,7 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | General | Toggle key | F8 | Turns cancelling on or off in game. |
 | Sword | Cancel primary combo | true | Cut the recovery after each primary blow. |
 | Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
+| Sword | Max combo (auto) | false | While the secondary attack plays, chain the second and third primary swings into it, then cancel. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |

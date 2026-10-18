@@ -19,6 +19,7 @@ internal static class Settings
 
     private static ConfigEntry<bool> _swordCombo = null!;
     private static ConfigEntry<bool> _swordSecondary = null!;
+    private static ConfigEntry<bool> _maxCombo = null!;
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _dodge = null!;
@@ -45,6 +46,8 @@ internal static class Settings
             Describe("Cut the recovery after each blow of the sword primary combo.", 100));
         _swordSecondary = config.Bind("Sword", "Cancel secondary", d.SwordSecondary,
             Describe("Cut the recovery after the sword secondary attack.", 90));
+        _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
+            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel. Off by default.", 85));
 
         _axesCombo = config.Bind("Berserker axes", "Combo blows to cancel", d.AxesCombo,
             Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
@@ -66,9 +69,49 @@ internal static class Settings
         _comboLab = config.Bind("Advanced", "Combo lab log", false,
             Describe("Measurement only: log inputs, attack starts, animator states, blocking and hits of the local player (CL lines), even with Enabled off.", 70, advanced: true));
 
-        config.SettingChanged += (_, __) => Rebuild();
+        config.SettingChanged += (_, __) =>
+        {
+            Rebuild();
+            LogConfig();
+        };
         Rebuild();
     }
+
+    /// <summary>
+    /// One ev=config line (AC with Debug log, CL with Combo lab log) so log analyses can label runs
+    /// by mode. Called at startup once the logger is set, and on every SettingChanged.
+    /// </summary>
+    internal static void LogConfig()
+    {
+        try
+        {
+            if (ReviewLog.Log == null)
+            {
+                return;
+            }
+
+            (string k, string v)[] kv = MaxComboPolicy.ConfigFields(_snapshot);
+            if (ReviewLog.On)
+            {
+                ReviewLog.Write("config", kv);
+            }
+
+            if (ComboLab.On)
+            {
+                ComboLab.Write("config", kv);
+            }
+        }
+        catch (System.Exception e)
+        {
+            if (!_configReported)
+            {
+                _configReported = true;
+                ReviewLog.Log?.LogError($"{nameof(Settings)}.{nameof(LogConfig)}: {e}");
+            }
+        }
+    }
+
+    private static bool _configReported;
 
     private static ConfigDescription Describe(string text, int order, bool advanced = false) =>
         new ConfigDescription(text, null, new ConfigurationManagerAttributes
@@ -89,6 +132,7 @@ internal static class Settings
             _dodge.Value,
             _emote.Value,
             _delayAfterHit.Value,
-            _debugLog.Value);
+            _debugLog.Value,
+            _maxCombo.Value);
     }
 }
