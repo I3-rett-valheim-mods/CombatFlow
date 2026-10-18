@@ -30,6 +30,9 @@ internal static class Canceller
     /// </summary>
     internal static bool Relaunched;
 
+    /// <summary>Time.time layer 0 was first seen fully in the emote while in flight; -1 otherwise.</summary>
+    private static float _fullyInEmoteSince = -1f;
+
     /// <param name="stateTag">Tag of the state being cancelled (default "attack"; a dodge passes its own).</param>
     /// <param name="kindOverride">Log kind when there is no current attack (dodge).</param>
     public static void Cancel(Player p, CancelEmote e, int? stateTag = null, string? kindOverride = null)
@@ -59,6 +62,7 @@ internal static class Canceller
 
         InFlight = true;
         LastCancelTime = Time.time;
+        _fullyInEmoteSince = -1f;
 
         if (ReviewLog.On)
         {
@@ -93,6 +97,7 @@ internal static class Canceller
         }
 
         InFlight = false;
+        _fullyInEmoteSince = -1f;
         dtSinceCancel = Time.time - LastCancelTime;
         // Do not let an unconsumed emote_stop wait for the next emote.
         Player? p = Player.m_localPlayer;
@@ -110,12 +115,14 @@ internal static class Canceller
         InFlight = false;
         CancelledState = null;
         Relaunched = false;
+        _fullyInEmoteSince = -1f;
     }
 
     /// <summary>
     /// Every frame: forgets the cancelled state once it left layer 0, and stops the emote
-    /// when the player is fully in it with no attack held. Works for a dodge cancel too
-    /// (no Attack needed).
+    /// when the player is fully in it with no attack held, or held for longer than
+    /// RecoveryPolicy.HeldGrace with no relaunch; drops a stale in-flight state after
+    /// RecoveryPolicy.Expiry. Works for a dodge cancel too (no Attack needed).
     /// </summary>
     internal static void TickRecovery()
     {
@@ -145,21 +152,55 @@ internal static class Canceller
             }
         }
 
-        bool attackHeld = p.m_attackHold || p.m_secondaryAttackHold;
-        if (!RecoveryPolicy.ShouldStop(InFlight, current.tagHash == TagEmote, inTransition, attackHeld))
+        if (!InFlight)
         {
             return;
         }
 
-        animator.SetTrigger(EmoteStop);
-        float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
-        ApplySpeedPlan(p, animator, pauseTimer);
+        bool currentIsEmote = current.tagHash == TagEmote;
+        float now = Time.time;
+        if (currentIsEmote && !inTransition)
+        {
+            if (_fullyInEmoteSince < 0f)
+            {
+                _fullyInEmoteSince = now;
+            }
+        }
+        else
+        {
+            _fullyInEmoteSince = -1f;
+        }
+
+        bool attackHeld = p.m_attackHold || p.m_secondaryAttackHold;
+        float inEmoteFor = _fullyInEmoteSince < 0f ? 0f : now - _fullyInEmoteSince;
+        RecoveryDecision d = RecoveryPolicy.Decide(InFlight, currentIsEmote, inTransition, attackHeld,
+            inEmoteFor, now - LastCancelTime);
+        if (d.Action == RecoveryAction.None)
+        {
+            return;
+        }
+
+        if (d.Action == RecoveryAction.Stop)
+        {
+            StopEmote(p, animator);
+        }
+
         InFlight = false;
+        _fullyInEmoteSince = -1f;
 
         if (ReviewLog.On)
         {
-            ReviewLog.Write("recovery_stop", ("dtSinceCancel", DebugLine.Num(Time.time - LastCancelTime)));
+            ReviewLog.Write(d.Action == RecoveryAction.Stop ? "recovery_stop" : "recovery_expire",
+                ("dtSinceCancel", DebugLine.Num(now - LastCancelTime)), ("reason", d.Reason));
         }
+    }
+
+    /// <summary>Local emote_stop, then the speed plan again (restore if hit-stop is still running).</summary>
+    private static void StopEmote(Player p, Animator animator)
+    {
+        animator.SetTrigger(EmoteStop);
+        float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
+        ApplySpeedPlan(p, animator, pauseTimer);
     }
 
     /// <summary>
