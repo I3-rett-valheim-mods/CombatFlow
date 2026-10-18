@@ -48,6 +48,9 @@ Tapping attack is not the goal: a tap during a cancel may be swallowed, as with 
 emote cancel. Release attack and your character returns to normal movement, with no stuck
 pose.
 
+While a Max combo loop runs, blocking and dodging wait until you release the button and the current
+swing's hit lands (vanilla refuses them during an attack).
+
 **F8** turns animation cancelling on or off in game and shows a short message.
 
 **Swap attack buttons** (Sword section, off by default): with a sword, the primary button
@@ -106,10 +109,10 @@ the finisher (90 degrees, several targets). Weapon durability drops fast while l
 Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
 secondary (the chain swings are part of it), so stamina stays flat while you hold the button. After `Max combo loop cap` extra swings a
 still-held button starts a new secondary, which costs stamina again.
-To measure it yourself, turn on **Debug log**, switch the per-weapon cancel options off for a
-vanilla run, and compare the timestamps of the damage events. **Combo lab log** (Advanced)
-writes much more detail (it needs Debug log on as well), but it is a debugging aid for bug
-reports, not something to leave on.
+To measure it yourself, turn on **Debug log** and **Combo lab log** (Advanced), turn `General / Enabled` off
+(or press the toggle key) for a vanilla run, and compare the timestamps of the swing and damage
+lines: the combo lab lines keep logging while Enabled is off, the other review lines do not. It
+writes much more detail, so it is a debugging aid for bug reports, not something to leave on.
 
 ## Multiplayer
 
