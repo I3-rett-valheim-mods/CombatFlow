@@ -1,0 +1,146 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Also upload to Thunderstore'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    # A step cannot read its own env in its `if`, so the presence of the secret is
+    # exposed here as a boolean. The token itself is only handed to the publish step.
+    env:
+      HAS_THUNDERSTORE_TOKEN: ${{ secrets.THUNDERSTORE_TOKEN != '' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # A tag that disagrees with the source would ship a package whose version
+      # does not match the plugin inside it, and Thunderstore versions can never
+      # be reused or withdrawn. Fail before building rather than after uploading.
+      - name: Check the tag agrees with the source
+        shell: pwsh
+        run: |
+          $plugin = (Select-String -Path src/AnimCancel.Plugin/PluginInfo.cs -Pattern 'Version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          $manifest = (Get-Content package/manifest.json -Raw | ConvertFrom-Json).version_number
+          $toml = (Select-String -Path thunderstore.toml -Pattern 'versionNumber\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+
+          "PluginInfo: $plugin | manifest: $manifest | thunderstore.toml: $toml"
+          if ($plugin -ne $manifest) { throw "PluginInfo.cs and manifest.json disagree" }
+          if ($plugin -ne $toml) { throw "PluginInfo.cs and thunderstore.toml disagree" }
+
+          # Only a tagged run has a tag to agree with. A manual run publishes
+          # whatever the source currently says.
+          if ("${{ github.ref_type }}" -eq "tag") {
+            $tag = "${{ github.ref_name }}" -replace '^v', ''
+            "tag: $tag"
+            if ($tag -ne $plugin) { throw "tag $tag does not match version $plugin" }
+          }
+
+          "VERSION=$plugin" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Test
+        env:
+          ANIMCANCEL_ALLOW_MISSING_GAME: '1'
+        run: dotnet test tests/AnimCancel.Tests/AnimCancel.Tests.csproj -c Release --nologo --verbosity minimal
+
+      # No Valheim on a runner, so this builds against published reference
+      # assemblies. Their file names carry a -publicized suffix but the assembly
+      # identity inside is unchanged, so the output binds to the real game
+      # assemblies at runtime exactly as a local build does.
+      - name: Build
+        run: dotnet build src/AnimCancel.Plugin/AnimCancel.Plugin.csproj -c Release --nologo -p:UseNuGetGameRefs=true
+
+      - name: Assemble the package
+        shell: pwsh
+        run: |
+          $stage = "build/out/stage"
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+
+          $files = @(
+            "src/AnimCancel.Plugin/bin/Release/AnimCancel.dll",
+            "src/AnimCancel.Plugin/bin/Release/AnimCancel.Core.dll",
+            "package/manifest.json",
+            "package/icon.png",
+            "package/README.md",
+            "package/CHANGELOG.md"
+          )
+          foreach ($file in $files) {
+            if (-not (Test-Path $file)) { throw "missing $file" }
+            Copy-Item $file $stage -Force
+          }
+
+          $zip = "build/out/AnimCancel-$env:VERSION.zip"
+          Compress-Archive -Path "$stage/*" -DestinationPath $zip -Force
+
+          # Reopen and count, because a partial archive is written silently when
+          # a file is locked mid-compression.
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $zip))
+          try {
+            $present = $archive.Entries.Count
+            if ($present -ne $files.Count) { throw "zip has $present entries, expected $($files.Count)" }
+            $archive.Entries | ForEach-Object { "  $($_.FullName)" }
+          } finally { $archive.Dispose() }
+
+          "ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Publish the GitHub release
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The same archive a mod manager installs, attached for anyone who
+          # installs by hand.
+          # Only this version's section, not the whole file: the notes would
+          # otherwise repeat every release that came before.
+          awk '/^## /{ if (seen) exit; seen=1 } seen' package/CHANGELOG.md > release-notes.md
+          cat release-notes.md
+
+          # Tolerant of a re-run: a failure further down should not make the
+          # whole job unrepeatable.
+          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            gh release upload "${{ github.ref_name }}" "$ZIP" --clobber
+          else
+            gh release create "${{ github.ref_name }}" "$ZIP" \
+              --title "AnimCancel $VERSION" \
+              --notes-file release-notes.md \
+              --verify-tag
+          fi
+
+      # Skipped unless the token is configured, so a tag never fails for want of
+      # a secret, and on a manual run only when "Also upload to Thunderstore" was
+      # ticked. A published version cannot be replaced or deleted, so this step
+      # deliberately runs last, after everything else has succeeded.
+      - name: Publish to Thunderstore
+        if: env.HAS_THUNDERSTORE_TOKEN == 'true' && (github.ref_type == 'tag' || inputs.publish == true)
+        env:
+          THUNDERSTORE_TOKEN: ${{ secrets.THUNDERSTORE_TOKEN }}
+        shell: bash
+        run: |
+          dotnet tool install -g tcli
+
+          # --file refuses to sit alongside --package-name, --package-namespace
+          # and --package-version: with a prebuilt archive, tcli takes the
+          # identity from thunderstore.toml instead. The version check above
+          # keeps that file in step with the manifest inside the archive.
+          tcli publish --file "$ZIP" --token "$THUNDERSTORE_TOKEN"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: AnimCancel-${{ env.VERSION }}
+          path: ${{ env.ZIP }}

@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Build and test
+    # Windows because the test project targets net48, and because the plugin is a
+    # Valheim mod: everything here is Windows-shaped.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Only the test project, deliberately. AnimCancel.Plugin references
+      # assembly_valheim.dll from a local Steam install, which no runner has, so a
+      # whole-solution build cannot work here. The test project references Core
+      # alone, which is where the logic that can be tested lives.
+      - name: Test
+        env:
+          # The API guard tests read the installed game assemblies and can assert
+          # nothing without them. They normally fail the run rather than pass
+          # silently; this acknowledges that CI is the one place they cannot run.
+          ANIMCANCEL_ALLOW_MISSING_GAME: '1'
+        run: dotnet test tests/AnimCancel.Tests/AnimCancel.Tests.csproj --configuration Release --nologo --verbosity minimal
+
+  package:
+    name: Validate package metadata
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # The manifest is what Thunderstore validates on upload, and a rejected
+      # upload wastes a version number that can never be reused.
+      - name: Check manifest and icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, re, struct, sys, pathlib
+
+          problems = []
+          manifest = json.loads(pathlib.Path("package/manifest.json").read_text(encoding="utf-8"))
+
+          name = manifest.get("name", "")
+          if not re.fullmatch(r"[A-Za-z0-9_]{1,128}", name):
+              problems.append(f"name {name!r} must be 1-128 characters of a-z A-Z 0-9 _")
+
+          version = manifest.get("version_number", "")
+          if not re.fullmatch(r"\d+\.\d+\.\d+", version):
+              problems.append(f"version_number {version!r} must be strict semver, X.Y.Z")
+
+          description = manifest.get("description", "")
+          if not description or len(description) > 250:
+              problems.append(f"description is {len(description)} characters, must be 1-250")
+
+          if "website_url" not in manifest:
+              problems.append("website_url key must exist, even if empty")
+
+          if not isinstance(manifest.get("dependencies"), list):
+              problems.append("dependencies must be a list")
+
+          for dependency in manifest.get("dependencies", []):
+              if len(dependency.split("-")) != 3:
+                  problems.append(f"dependency {dependency!r} must be Team-Package-Version")
+
+          # PluginInfo is the source of truth; a mismatch ships a package whose
+          # version does not match the plugin inside it.
+          source = pathlib.Path("src/AnimCancel.Plugin/PluginInfo.cs").read_text(encoding="utf-8")
+          match = re.search(r'Version\s*=\s*"([^"]+)"', source)
+          if not match:
+              problems.append("could not read Version from PluginInfo.cs")
+          elif match.group(1) != version:
+              problems.append(f"PluginInfo.cs says {match.group(1)}, manifest says {version}")
+
+          icon = pathlib.Path("package/icon.png")
+          if not icon.exists():
+              problems.append("package/icon.png is missing")
+          else:
+              header = icon.read_bytes()[:24]
+              if header[:8] != b"\x89PNG\r\n\x1a\n":
+                  problems.append("package/icon.png is not a PNG")
+              else:
+                  width, height = struct.unpack(">II", header[16:24])
+                  if (width, height) != (256, 256):
+                      problems.append(f"icon is {width}x{height}, Thunderstore requires 256x256")
+
+          for required in ("package/README.md", "package/CHANGELOG.md"):
+              if not pathlib.Path(required).exists():
+                  problems.append(f"{required} is missing")
+
+          if problems:
+              print("Package metadata problems:")
+              for problem in problems:
+                  print(f"  - {problem}")
+              sys.exit(1)
+
+          print(f"{name} {version} looks publishable.")
+          PY
