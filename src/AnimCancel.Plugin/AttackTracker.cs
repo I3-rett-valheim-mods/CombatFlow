@@ -67,7 +67,8 @@ internal static class AttackTracker
                                 out string clipPick)
                             ?? NoTiming;
         int lvl = atk.m_currentAttackCainLevel;
-        // Max combo (option on, sword secondary) replaces the plain policy: steps 1-2 never cancel, step 3 does.
+        // Max combo (option on, sword secondary or berserker axes finisher) replaces the plain policy:
+        // steps 1-2 never cancel, step 3 does.
         bool clipIsNext = clipPick == ClipPick.LogValue(ClipPickResult.Next);
         CancelDecision d = MaxComboRun.OnHit(player, atk, kind, s, clip, clipIsNext, out bool maxComboCancel)
             ? new CancelDecision(maxComboCancel, maxComboCancel ? "ok" : "maxcombo")

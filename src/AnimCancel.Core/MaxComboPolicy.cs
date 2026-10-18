@@ -2,7 +2,8 @@ using System.Globalization;
 
 namespace AnimCancel.Core
 {
-    public enum MaxComboActionKind { None, TriggerSwing1, TriggerSwing2, CancelNow, Abort }
+    /// <summary>Progress: a hit of the expected swing that is not its last (two-hit clips): only the step time moves.</summary>
+    public enum MaxComboActionKind { None, TriggerSwing1, TriggerSwing2, CancelNow, Abort, Progress }
 
     public readonly struct MaxComboAction
     {
@@ -22,6 +23,7 @@ namespace AnimCancel.Core
         public static MaxComboAction TriggerSwing1 => new(MaxComboActionKind.TriggerSwing1, "");
         public static MaxComboAction TriggerSwing2 => new(MaxComboActionKind.TriggerSwing2, "");
         public static MaxComboAction CancelNow => new(MaxComboActionKind.CancelNow, "");
+        public static MaxComboAction Progress => new(MaxComboActionKind.Progress, "");
         public static MaxComboAction Abort(string reason) => new(MaxComboActionKind.Abort, reason);
 
         /// <summary>Loop mode: end the run with a normal cancel at this hit (released|cap).</summary>
@@ -87,23 +89,53 @@ namespace AnimCancel.Core
                && primaryAnimation == PrimaryAnimation
                && primaryChainLevels >= MinPrimaryLevels;
 
+        /// <summary>Profile eligibility (<see cref="MaxComboProfile"/>): the current Attack can carry a run.</summary>
+        public static bool Eligible(MaxComboProfile profile, string? attackAnimation, int attackLevel, int attackLevels,
+            string? primaryAnimation, int primaryLevels, string? secondaryAnimation)
+            => profile.Eligible(attackAnimation, attackLevel, attackLevels, primaryAnimation, primaryLevels,
+                secondaryAnimation);
+
         /// <summary>The hit is handled by max combo instead of the plain cancel policy.</summary>
         public static bool Routes(AttackKind kind, CancelSettings s, bool eligible)
-            => s.Enabled && s.MaxCombo && kind == AttackKind.SwordSecondary && eligible;
+            => Routes(MaxComboProfile.Sword, kind, s, eligible);
+
+        /// <summary>The hit is handled by this profile's max combo instead of the plain cancel policy.</summary>
+        public static bool Routes(MaxComboProfile profile, AttackKind kind, CancelSettings s, bool eligible)
+            => s.Enabled && profile.IsOn(s) && kind == profile.Kind && eligible;
 
         /// <summary>
         /// OnHit owns this hit: it routes, or a run is still running and the hit is a sword secondary
         /// (a primary or any other attack never belongs to the run).
         /// </summary>
         public static bool Handles(AttackKind kind, bool routes, bool wasRunning)
-            => routes || (wasRunning && kind == AttackKind.SwordSecondary);
+            => Handles(MaxComboProfile.Sword, kind, routes, wasRunning, sameInstance: false);
+
+        /// <summary>
+        /// OnHit owns this hit: it routes, or a run of <paramref name="runProfile"/> was running and the hit is of
+        /// its kind, from the run's Attack (<paramref name="sameInstance"/>) unless the profile owns other instances.
+        /// </summary>
+        public static bool Handles(MaxComboProfile runProfile, AttackKind kind, bool routes, bool wasRunning,
+            bool sameInstance)
+            => routes || (wasRunning && kind == runProfile.Kind && (runProfile.OwnsOtherInstances || sameInstance));
 
         /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).
         /// <paramref name="held"/>: the secondary button is held (Loop mode only).</summary>
         public static MaxComboAction Decide(MaxComboState state, string? firedClip, bool sameInstance,
             CancelSettings s, float sinceLastStep, bool eligible, bool staggering, bool held = false)
+            => Decide(MaxComboProfile.Sword, state, firedClip, 1, sameInstance, s, sinceLastStep, eligible, staggering,
+                held);
+
+        /// <summary>
+        /// At a damage event, for <paramref name="profile"/>. <paramref name="swingHit"/> is the hit's 1-based
+        /// number within the swing being played (SwingHitCounter); only a swing's last hit advances the run,
+        /// an earlier one of the expected swing is a <see cref="MaxComboActionKind.Progress"/>.
+        /// <paramref name="held"/>: the profile's Loop button is held (Loop mode only).
+        /// </summary>
+        public static MaxComboAction Decide(MaxComboProfile profile, MaxComboState state, string? firedClip,
+            int swingHit, bool sameInstance, CancelSettings s, float sinceLastStep, bool eligible, bool staggering,
+            bool held = false)
         {
-            bool on = s.Enabled && s.MaxCombo;
+            bool on = s.Enabled && profile.IsOn(s);
             if (state.Running)
             {
                 MaxComboAction abort = AbortReason(on, sameInstance, staggering, false, sinceLastStep);
@@ -113,22 +145,32 @@ namespace AnimCancel.Core
                 }
 
                 bool loop = s.MaxComboMode == MaxComboMode.Loop;
-                if (state.Step == 1 && firedClip == Swing1Clip)
+                if (state.Step == 1 && firedClip == profile.Swing1Clip)
                 {
+                    if (swingHit < profile.Swing1Hits)
+                    {
+                        return MaxComboAction.Progress;
+                    }
+
                     // The first pass (Loop 0) runs as in Cycle; past it, a loop hit.
                     return loop && state.Loop > 0 ? LoopHit(state, s, held, MaxComboAction.TriggerSwing2)
                         : MaxComboAction.TriggerSwing2;
                 }
 
-                if (state.Step == 2 && firedClip == Swing2Clip)
+                if (state.Step == 2 && firedClip == profile.Swing2Clip)
                 {
+                    if (swingHit < profile.Swing2Hits)
+                    {
+                        return MaxComboAction.Progress;
+                    }
+
                     return loop ? LoopHit(state, s, held, MaxComboAction.TriggerSwing1) : MaxComboAction.CancelNow;
                 }
 
                 return MaxComboAction.None;
             }
 
-            if (!on || !eligible || staggering || firedClip != SecondaryClip)
+            if (!on || !eligible || staggering || firedClip != profile.StartClip || swingHit < profile.StartHits)
             {
                 return MaxComboAction.None;
             }
@@ -139,8 +181,13 @@ namespace AnimCancel.Core
         /// <summary>Every frame while a run is going: abort when it can no longer complete.</summary>
         public static MaxComboAction Watch(MaxComboState state, bool sameInstance, CancelSettings s,
             float sinceLastStep, bool staggering, bool dodging)
+            => Watch(MaxComboProfile.Sword, state, sameInstance, s, sinceLastStep, staggering, dodging);
+
+        /// <summary>Every frame while a run of <paramref name="profile"/> is going.</summary>
+        public static MaxComboAction Watch(MaxComboProfile profile, MaxComboState state, bool sameInstance,
+            CancelSettings s, float sinceLastStep, bool staggering, bool dodging)
             => state.Running
-                ? AbortReason(s.Enabled && s.MaxCombo, sameInstance, staggering, dodging, sinceLastStep)
+                ? AbortReason(s.Enabled && profile.IsOn(s), sameInstance, staggering, dodging, sinceLastStep)
                 : MaxComboAction.None;
 
         public static MaxComboState Next(MaxComboState state, MaxComboAction a, int instanceId, float now)
@@ -154,6 +201,9 @@ namespace AnimCancel.Core
                         : new MaxComboState(1, instanceId, now);
                 case MaxComboActionKind.TriggerSwing2:
                     return new MaxComboState(2, state.InstanceId, now, state.Loop > 0 ? state.Loop + 1 : 0);
+                case MaxComboActionKind.Progress:
+                    // A non-last hit of the expected swing: the timeout counts from it.
+                    return state.Running ? state with { StepTime = now } : state;
                 case MaxComboActionKind.CancelNow:
                 case MaxComboActionKind.Abort: return MaxComboState.Idle;
                 default: return state;
@@ -191,6 +241,9 @@ namespace AnimCancel.Core
             ("stamina", stamina.ToString("0.0", CultureInfo.InvariantCulture)),
         };
 
+        /// <summary>Key added to every ev=maxcombo / maxcombo_end / maxcombo_abort line (sword|axes).</summary>
+        public static (string k, string v)[] WeaponFields(MaxComboProfile profile) => new[] { ("weapon", profile.Weapon) };
+
         /// <summary>ev=maxcombo_end keys (Loop mode ended with a cancel).</summary>
         public static (string k, string v)[] EndFields(string reason) => new[] { ("reason", reason) };
 
@@ -206,6 +259,7 @@ namespace AnimCancel.Core
             ("swordCombo", DebugLine.Bool(s.SwordCombo)),
             ("swordSecondary", DebugLine.Bool(s.SwordSecondary)),
             ("maxComboLoopCap", s.MaxComboLoopCap.ToString(CultureInfo.InvariantCulture)),
+            ("axesMaxCombo", DebugLine.Bool(s.AxesMaxCombo)),
         };
 
         /// <summary>Low 16 bits of an instance id, 4 hex digits.</summary>

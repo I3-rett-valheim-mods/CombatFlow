@@ -25,6 +25,7 @@ internal static class Settings
     private static ConfigEntry<bool> _swapButtons = null!;
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
+    private static ConfigEntry<bool> _axesMaxCombo = null!;
     private static ConfigEntry<bool> _dodge = null!;
     private static ConfigEntry<bool> _autoParry = null!;
     private static ConfigEntry<CancelEmote> _emote = null!;
@@ -53,10 +54,10 @@ internal static class Settings
         _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
             Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Works even with Cancel secondary off. The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. On by default.", 85));
         _maxComboMode = config.Bind("Sword", "Max combo mode", d.MaxComboMode,
-            Describe("Used when Max combo (auto) is on. Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Releasing the button cancels at the next hit (one more swing may play). After Max combo loop cap extra swings a still-held button starts a new secondary, which costs stamina again.", 84));
+            Describe("Used by Max combo (auto) of the sword and of the Berserker axes. Sword, Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Sword, Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Berserker axes: the same with the combo finisher and the third and fourth blows, while the primary button is held. Releasing the button cancels at the end of the swing playing (one more swing may play). After Max combo loop cap extra swings a still-held button starts a new attack, which costs stamina again.", 84));
         _maxComboLoopCap = config.Bind("Sword", "Max combo loop cap", d.MaxComboLoopCap,
             new ConfigDescription(
-                "Max combo mode Loop only: how many extra swings are chained past the first pass before the run ends with a cancel, from 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap: the loop goes on until the button is released or the run is interrupted.",
+                "Max combo mode Loop only, sword and Berserker axes: how many extra swings are chained past the first pass before the run ends with a cancel, from 0 to 1000. A still-held button then starts a new attack, which costs stamina again. 0 means no cap: the loop goes on until the button is released or the run is interrupted.",
                 new AcceptableValueRange<int>(MaxComboPolicy.MinLoopCap, MaxComboPolicy.MaxLoopCap),
                 new ConfigurationManagerAttributes { Order = 83 }));
         _swapButtons = config.Bind("Sword", "Swap attack buttons", d.SwapButtons,
@@ -66,6 +67,8 @@ internal static class Settings
             Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
         _axesSecondary = config.Bind("Berserker axes", "Cancel secondary (Cleave)", d.AxesSecondary,
             Describe("Cut the recovery after the Berserker axes secondary attack, Cleave.", 90));
+        _axesMaxCombo = config.Bind("Berserker axes", "Max combo (auto)", d.AxesMaxCombo,
+            Describe("After the last hit of the primary combo finisher, chain the third and fourth blows into it, then cancel or loop, with Max combo mode and Max combo loop cap of the Sword section. The chained blows keep the finisher's bonus damage. Loop mode keeps going while the primary button is held; releasing it cancels at the end of the swing playing. On by default.", 85));
 
         _dodge = config.Bind("Dodge", "Cancel after invincibility", d.Dodge,
             Describe("End the dodge roll as soon as its invincibility window is over.", 100));
@@ -153,6 +156,7 @@ internal static class Settings
             _maxComboMode.Value,
             _maxComboLoopCap.Value,
             _swapButtons.Value,
-            _autoParry.Value);
+            _autoParry.Value,
+            _axesMaxCombo.Value);
     }
 }

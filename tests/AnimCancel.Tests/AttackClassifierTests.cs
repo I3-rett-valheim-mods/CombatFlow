@@ -54,7 +54,7 @@ namespace AnimCancel.Tests
         public void Default_settings()
         {
             var d = CancelSettings.Default;
-            Assert.Equal(new CancelSettings(true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false, true, MaxComboMode.Loop, 0), d);
+            Assert.Equal(new CancelSettings(true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false, true, MaxComboMode.Loop, 0, AxesMaxCombo: true), d);
         }
     }
 }

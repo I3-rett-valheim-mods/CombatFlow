@@ -6,18 +6,22 @@ using UnityEngine;
 namespace AnimCancel;
 
 /// <summary>
-/// Max combo (auto): drives <see cref="MaxComboPolicy"/> for the local player. At the sword
-/// secondary's hit it sets swing_longsword1, at swing_sword 1's hit swing_longsword2 (local
-/// Animator only, through <see cref="Canceller.Chain"/>), and at swing_sword 2's hit hands back a
-/// normal cancel (Cycle). In Loop mode it keeps alternating swing_longsword1/2 while the secondary
-/// button is held and hands back the cancel on release or at the cap. Every frame it aborts a run
-/// that can no longer complete.
+/// Max combo (auto): drives <see cref="MaxComboPolicy"/> for the local player, per weapon
+/// <see cref="MaxComboProfile"/>. Sword: at the secondary's hit it sets swing_longsword1, at
+/// swing_sword 1's hit swing_longsword2. Berserker axes: at the finisher's last hit it sets dualaxes2,
+/// at DualAxes 2's last hit dualaxes3. Triggers go to the local Animator only, through
+/// <see cref="Canceller.Chain"/>; at the second chained swing's last hit it hands back a normal cancel
+/// (Cycle). In Loop mode it keeps alternating the two swings while the profile's button is held and
+/// hands back the cancel on release or at the cap. Every frame it aborts a run that can no longer complete.
 /// </summary>
 internal static class MaxComboRun
 {
     private static readonly int TagDodge = Animator.StringToHash("dodge");
 
+    private static readonly SwingHitCounter SwingHits = new();
+
     private static MaxComboState _state = MaxComboState.Idle;
+    private static MaxComboProfile _profile = MaxComboProfile.Sword;
     private static Attack? _attack;
     private static bool _hitReported;
     private static bool _tickReported;
@@ -31,48 +35,64 @@ internal static class MaxComboRun
         out bool cancelNow)
     {
         cancelNow = false;
-        if (!s.MaxCombo && !_state.Running)
+        MaxComboProfile? hitProfile = MaxComboProfile.For(kind);
+        if (!_state.Running && (hitProfile == null || !hitProfile.IsOn(s)))
         {
-            return false; // option off: the plain policy, untouched
+            return false; // option off or not a carrying attack: the plain policy, untouched
         }
 
         bool wasRunning = _state.Running;
+        MaxComboProfile runProfile = wasRunning ? _profile : hitProfile!;
+        bool sameInstance = ReferenceEquals(atk, _attack);
         try
         {
-            bool eligible = kind == AttackKind.SwordSecondary && Eligible(p, atk);
-            bool routes = MaxComboPolicy.Routes(kind, s, eligible);
-            if (!routes && !_state.Running)
+            bool eligible = hitProfile != null && Eligible(hitProfile, p, atk);
+            bool routes = hitProfile != null && MaxComboPolicy.Routes(hitProfile, kind, s, eligible);
+            if (!routes && !wasRunning)
             {
                 return false;
             }
 
             float now = Time.time;
             bool staggering = p.IsStaggering();
-            bool held = p.m_secondaryAttackHold;
-            MaxComboAction a = MaxComboPolicy.Decide(_state, clip, ReferenceEquals(atk, _attack), s,
-                now - _state.StepTime, eligible, staggering, held);
+            int id = RuntimeHelpers.GetHashCode(atk);
+            int swingHit = SwingHits.Register(id, clip);
+            MaxComboProfile profile = runProfile;
+            MaxComboAction a = MaxComboPolicy.Decide(profile, _state, clip, swingHit, sameInstance, s,
+                now - _state.StepTime, eligible, staggering, Held(profile, p));
             if (a.Kind == MaxComboActionKind.Abort)
             {
                 Abort(p, a.Reason);
-                // This hit may start a new run (a new secondary instance).
-                a = MaxComboPolicy.Decide(_state, clip, false, s, 0f, eligible, staggering, held);
+                // This hit may start a new run (a new carrying instance, possibly of another weapon).
+                a = MaxComboAction.None;
+                if (hitProfile != null)
+                {
+                    profile = hitProfile;
+                    a = MaxComboPolicy.Decide(profile, _state, clip, swingHit, false, s, 0f, eligible, staggering,
+                        Held(profile, p));
+                }
             }
 
-            int id = RuntimeHelpers.GetHashCode(atk);
+            bool handles = MaxComboPolicy.Handles(runProfile, kind, routes, wasRunning, sameInstance);
             switch (a.Kind)
             {
                 case MaxComboActionKind.TriggerSwing1:
                 case MaxComboActionKind.TriggerSwing2:
-                    string trigger = MaxComboPolicy.TriggerFor(a.Kind)!;
-                    string? plan = Canceller.Chain(p, trigger, clipIsNext, MaxComboPolicy.SwingTriggers);
+                    string trigger = profile.TriggerFor(a.Kind)!;
+                    string? plan = Canceller.Chain(p, trigger, clipIsNext, profile.SwingTriggers);
                     if (plan == null)
                     {
-                        return MaxComboPolicy.Handles(kind, routes, wasRunning);
+                        return handles;
                     }
 
                     _attack = atk;
+                    _profile = profile;
                     _state = MaxComboPolicy.Next(_state, a, id, now);
                     LogStep(p, a.Kind, clip, _state.InstanceId, _state.Loop, plan);
+                    break;
+                case MaxComboActionKind.Progress:
+                    // A non-last hit of a two-hit swing: the timeout counts from it, nothing is set.
+                    _state = MaxComboPolicy.Next(_state, a, id, now);
                     break;
                 case MaxComboActionKind.CancelNow:
                     int loop = _state.Loop;
@@ -94,7 +114,7 @@ internal static class MaxComboRun
             }
 
             // A hit of a run that just aborted (option turned off) is still ours: no plain cancel.
-            return MaxComboPolicy.Handles(kind, routes, wasRunning);
+            return handles;
         }
         catch (Exception e)
         {
@@ -133,7 +153,7 @@ internal static class MaxComboRun
             bool dodging = a != null
                            && (a.GetCurrentAnimatorStateInfo(0).tagHash == TagDodge
                                || (a.IsInTransition(0) && a.GetNextAnimatorStateInfo(0).tagHash == TagDodge));
-            MaxComboAction d = MaxComboPolicy.Watch(_state, ReferenceEquals(p.m_currentAttack, _attack), s,
+            MaxComboAction d = MaxComboPolicy.Watch(_profile, _state, ReferenceEquals(p.m_currentAttack, _attack), s,
                 Time.time - _state.StepTime, p.IsStaggering(), dodging);
             if (d.Kind == MaxComboActionKind.Abort)
             {
@@ -152,13 +172,24 @@ internal static class MaxComboRun
         }
     }
 
-    /// <summary>The current attack is the sword secondary of a weapon whose primary is the 3-level longsword combo.</summary>
-    private static bool Eligible(Player p, Attack atk)
+    /// <summary>
+    /// The current attack can carry a run of <paramref name="profile"/>: the sword secondary of a weapon whose
+    /// primary is the 3-level longsword combo, or the berserker axes finisher (dualaxes, last of 4 levels) of a
+    /// weapon whose secondary is dualaxes_secondary.
+    /// </summary>
+    private static bool Eligible(MaxComboProfile profile, Player p, Attack atk)
     {
-        Attack? primary = p.GetCurrentWeapon()?.m_shared?.m_attack;
+        ItemDrop.ItemData.SharedData? shared = p.GetCurrentWeapon()?.m_shared;
+        Attack? primary = shared?.m_attack;
         return primary != null
-               && MaxComboPolicy.Eligible(atk.m_attackAnimation, primary.m_attackAnimation, primary.m_attackChainLevels);
+               && MaxComboPolicy.Eligible(profile, atk.m_attackAnimation, atk.m_currentAttackCainLevel,
+                   atk.m_attackChainLevels, primary.m_attackAnimation, primary.m_attackChainLevels,
+                   shared!.m_secondaryAttack?.m_attackAnimation);
     }
+
+    /// <summary>Loop mode's button: the secondary for the sword, the primary for the berserker axes.</summary>
+    private static bool Held(MaxComboProfile profile, Player p)
+        => profile.HoldPrimary ? p.m_attackHold : p.m_secondaryAttackHold;
 
     /// <summary>Abort from a catch block: never throws.</summary>
     private static void SafeAbort(Player? p, string reason)
@@ -178,6 +209,7 @@ internal static class MaxComboRun
         {
             _state = MaxComboState.Idle;
             _attack = null;
+            SwingHits.Reset();
         }
     }
 
@@ -190,7 +222,7 @@ internal static class MaxComboRun
         Animator? a = p.m_animator;
         if (a != null)
         {
-            foreach (string t in MaxComboPolicy.AbortTriggers)
+            foreach (string t in _profile.AbortTriggers)
             {
                 a.ResetTrigger(t);
             }
@@ -199,7 +231,7 @@ internal static class MaxComboRun
         if (ReviewLog.On)
         {
             ReviewLog.Write("maxcombo_abort", Concat(MaxComboPolicy.AbortFields(reason),
-                MaxComboPolicy.RunFields(loop, null, p.GetStamina())));
+                MaxComboPolicy.RunFields(loop, null, p.GetStamina()), MaxComboPolicy.WeaponFields(_profile)));
         }
 
         if (reason == "instance" && ReviewLog.On)
@@ -213,7 +245,7 @@ internal static class MaxComboRun
         if (ReviewLog.On)
         {
             ReviewLog.Write("maxcombo", Concat(MaxComboPolicy.StepFields(MaxComboPolicy.StepNumber(k), clip, id),
-                MaxComboPolicy.RunFields(loop, plan, p.GetStamina())));
+                MaxComboPolicy.RunFields(loop, plan, p.GetStamina()), MaxComboPolicy.WeaponFields(_profile)));
         }
     }
 
@@ -224,7 +256,7 @@ internal static class MaxComboRun
         {
             ReviewLog.Write("maxcombo_end", Concat(MaxComboPolicy.EndFields(reason),
                 new[] { ("clip", clip), ("attack", MaxComboPolicy.ShortId(id)) },
-                MaxComboPolicy.RunFields(loop, null, p.GetStamina())));
+                MaxComboPolicy.RunFields(loop, null, p.GetStamina()), MaxComboPolicy.WeaponFields(_profile)));
         }
     }
 

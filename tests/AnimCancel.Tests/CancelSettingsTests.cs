@@ -26,6 +26,7 @@ namespace AnimCancel.Tests
             Assert.Equal(0, d.MaxComboLoopCap);
             Assert.False(d.SwapButtons, nameof(d.SwapButtons));
             Assert.False(d.AutoParry, nameof(d.AutoParry));
+            Assert.True(d.AxesMaxCombo, nameof(d.AxesMaxCombo));
         }
     }
 }
