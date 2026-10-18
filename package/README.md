@@ -48,9 +48,11 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 
 ## How much faster
 
-Modelled at roughly ×1.6–1.8 on the sword; not yet measured in game. To measure it
-yourself, turn on **Debug log** and compare the timestamps of the damage events with the
-mod on and off.
+Measured in game (solo, hitting a target, damage multipliers counted: finisher ×2, secondary ×3):
+sword combo about ×1.5 (1.6 → 2.5 base-damage hits per second), sword secondary about ×1.6
+(1.7 → 2.6). Stamina use per second rises by the same factor. To measure it yourself, turn on
+**Debug log**, switch the per-weapon cancel options off for a vanilla run, and compare the
+timestamps of the damage events.
 
 ## Multiplayer
 
