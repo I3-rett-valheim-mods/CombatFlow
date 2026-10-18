@@ -502,6 +502,57 @@ public class GameApiGuardTests
     }
 
     [Fact]
+    public void ItemData_SharedData_m_secondaryAttack_is_an_Attack()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // SwapButtonsPatch reads GetCurrentWeapon().m_shared.m_secondaryAttack.m_attackAnimation (sword_secondary).
+        TypeDefinition sharedData = GameAssembly.NestedType("ItemDrop", "ItemData").NestedTypes.Single(t => t.Name == "SharedData");
+        FieldDefinition secondary = sharedData.Fields.Single(f => f.Name == "m_secondaryAttack");
+        Assert.False(secondary.IsStatic);
+        Assert.Equal("Attack", secondary.FieldType.FullName);
+    }
+
+    [Fact]
+    public void Player_InPlaceMode_is_a_public_bool_override()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // SwapButtonsPatch never swaps in build mode.
+        MethodDefinition method = GameAssembly.Method("Player", "InPlaceMode");
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Boolean", method.ReturnType.FullName);
+        Assert.Empty(method.Parameters);
+    }
+
+    [Fact]
+    public void Player_SetControls_is_the_only_overload_and_takes_the_four_attack_bools_by_value()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // SwapButtonsPatch binds attack (1), attackHold (2), secondaryAttack (3), secondaryAttackHold (4) by name with ref.
+        MethodDefinition method = GameAssembly.Type("Player").Methods.Single(m => m.Name == "SetControls");
+        string[] names = { "attack", "attackHold", "secondaryAttack", "secondaryAttackHold" };
+        for (int i = 0; i < names.Length; i++)
+        {
+            ParameterDefinition p = method.Parameters[i + 1];
+            Assert.Equal(names[i], p.Name);
+            Assert.Equal("System.Boolean", p.ParameterType.FullName);
+            Assert.False(p.ParameterType.IsByReference);
+        }
+    }
+
+    [Fact]
     public void Humanoid_OnAttackTrigger_still_hands_the_hit_to_m_currentAttack()
     {
         if (!GameAssembly.IsAvailable)

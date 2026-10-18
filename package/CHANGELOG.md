@@ -12,6 +12,9 @@
   `Max combo loop cap` (default 0 = no cap; 1 to 1000 to limit) sets how many extra swings Loop chains
   before it cancels.
   Works with Cancel secondary off and honours Delay after hit.
+- **Sword, Swap attack buttons.** Off by default: with a sword, the primary and
+  secondary attack buttons trade places, so holding the primary button runs the Max combo
+  loop. Other weapons, tools and build mode are untouched; off whenever the mod is off.
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
   faster than the game's own chain point.

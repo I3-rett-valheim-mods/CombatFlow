@@ -8,9 +8,14 @@ namespace AnimCancel.Patches;
 // Combo lab log patches: measurement only. Every prefix returns true and none writes an
 // argument, a field or __result. Each returns at once unless Combo lab log is on and the
 // instance is the local player. They run whatever Enabled says. Priority.First puts the
-// prefixes ahead of AnimCancel's own on the same method, so they always see the call.
+// prefixes ahead of AnimCancel's own on the same method, so they always see the call. The one
+// exception is Player.SetControls, where SwapButtonsPatch runs earlier still (see LabSetControlsPatch).
 
-/// <summary>Player.SetControls: input edges (the arguments as passed in).</summary>
+/// <summary>
+/// Player.SetControls: input edges. Priority.First (800) runs after SwapButtonsPatch (First + 100),
+/// so the values are what the game receives; swapped=1 marks a call where Swap attack buttons
+/// exchanged them (the raw input is the mirror image: attack with secondary, hold with hold).
+/// </summary>
 [HarmonyPatch(typeof(Player), nameof(Player.SetControls))]
 internal static class LabSetControlsPatch
 {
@@ -25,7 +30,8 @@ internal static class LabSetControlsPatch
                 return true;
             }
 
-            ComboLab.OnInput(attack, attackHold, secondaryAttack, secondaryAttackHold, block, blockHold);
+            ComboLab.OnInput(attack, attackHold, secondaryAttack, secondaryAttackHold, block, blockHold,
+                SwapButtonsPatch.SwappedThisCall);
         }
         catch (Exception e)
         {

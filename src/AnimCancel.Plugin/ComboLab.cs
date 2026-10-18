@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AnimCancel.Core;
 using UnityEngine;
 
@@ -94,19 +95,26 @@ internal static class ComboLab
         }
     }
 
-    /// <summary>Player.SetControls arguments as passed in (before the game clears them for emotes).</summary>
-    internal static void OnInput(bool attack, bool attackHold, bool secondary, bool secondaryHold, bool block, bool blockHold)
+    /// <summary>Player.SetControls arguments as the game receives them (after Swap attack buttons, before the
+    /// game clears them for emotes). <paramref name="swapped"/> adds swapped=1.</summary>
+    internal static void OnInput(bool attack, bool attackHold, bool secondary, bool secondaryHold, bool block, bool blockHold,
+        bool swapped)
     {
-        int mask = LabLine.InputMask(attack, attackHold, secondary, secondaryHold, block, blockHold);
+        // Bit 64: a swap toggle alone changes the raw input, so it is a new line too.
+        int mask = LabLine.InputMask(attack, attackHold, secondary, secondaryHold, block, blockHold) | (swapped ? 64 : 0);
         if (mask == _inputMask)
         {
             return;
         }
 
         _inputMask = mask;
-        Write("input", ("attack", LabLine.Bit(attack)), ("attackHold", LabLine.Bit(attackHold)),
+        (string k, string v)[] kv =
+        {
+            ("attack", LabLine.Bit(attack)), ("attackHold", LabLine.Bit(attackHold)),
             ("secondary", LabLine.Bit(secondary)), ("secondaryHold", LabLine.Bit(secondaryHold)),
-            ("block", LabLine.Bit(block)), ("blockHold", LabLine.Bit(blockHold)));
+            ("block", LabLine.Bit(block)), ("blockHold", LabLine.Bit(blockHold)),
+        };
+        Write("input", swapped ? kv.Concat(SwapButtons.LabFields(true)).ToArray() : kv);
     }
 
     /// <summary>The value the game's own Humanoid.IsBlocking call returned.</summary>

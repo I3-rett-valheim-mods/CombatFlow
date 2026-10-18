@@ -10,7 +10,9 @@ namespace AnimCancel.Patches;
 /// secondaryAttackHold and calls StopEmote() while InEmote() and the player moves. This
 /// prefix records the incoming hold arguments around a cancel and the postfix logs
 /// hold_drop when a held button ended up false in m_attackHold / m_secondaryAttackHold.
-/// It never changes an argument or a field.
+/// It never changes an argument or a field. Priority.Normal: it runs after SwapButtonsPatch
+/// (Priority.First + 100), so with Swap attack buttons on it compares the swapped holds, the
+/// values the game actually stores.
 /// </summary>
 [HarmonyPatch(typeof(Player), nameof(Player.SetControls))]
 internal static class SetControlsPatch
@@ -24,6 +26,7 @@ internal static class SetControlsPatch
         public bool Secondary;
     }
 
+    [HarmonyPriority(Priority.Normal)]
     private static bool Prefix(Player __instance, bool attackHold, bool secondaryAttackHold, out State __state)
     {
         __state = default;

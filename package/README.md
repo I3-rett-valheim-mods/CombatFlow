@@ -37,6 +37,11 @@ pose.
 
 **F8** turns animation cancelling on or off in game and shows a short message.
 
+**Swap attack buttons** (Sword section, off by default): with a sword, the primary button
+starts the secondary attack, so holding it runs the Max combo loop, and the secondary button
+plays the light combo. Only the two attack buttons change (keyboard, mouse and gamepad); other
+weapons, tools and build mode keep the game's layout, and the swap is off whenever the mod is.
+
 ## Configuration
 
 Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManager.
@@ -50,6 +55,7 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Sword | Max combo (auto) | true | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
 | Sword | Max combo mode | Loop | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held (only the first secondary costs stamina); releasing takes effect at the next hit. |
 | Sword | Max combo loop cap | 0 | Loop mode only: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap. |
+| Sword | Swap attack buttons | false | With a sword only, swap the primary and secondary attack buttons (press and hold). Block, dodge, jump, movement, other weapons, tools and build mode are unchanged. Needs Enabled on. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |

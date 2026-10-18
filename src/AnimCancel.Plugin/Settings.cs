@@ -22,6 +22,7 @@ internal static class Settings
     private static ConfigEntry<bool> _maxCombo = null!;
     private static ConfigEntry<MaxComboMode> _maxComboMode = null!;
     private static ConfigEntry<int> _maxComboLoopCap = null!;
+    private static ConfigEntry<bool> _swapButtons = null!;
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _dodge = null!;
@@ -57,6 +58,8 @@ internal static class Settings
                 "Max combo mode Loop only: how many extra swings are chained past the first pass before the run ends with a cancel, from 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap: the loop goes on until the button is released or the run is interrupted.",
                 new AcceptableValueRange<int>(MaxComboPolicy.MinLoopCap, MaxComboPolicy.MaxLoopCap),
                 new ConfigurationManagerAttributes { Order = 83 }));
+        _swapButtons = config.Bind("Sword", "Swap attack buttons", d.SwapButtons,
+            Describe("With a sword only, swap the primary and secondary attack buttons (press and hold), so the primary button starts the secondary and its Max combo loop and the secondary button the light combo. Block, dodge, jump and movement are unchanged; other weapons, tools and build mode are untouched. Works with a gamepad. Needs Enabled on. Off by default.", 82));
 
         _axesCombo = config.Bind("Berserker axes", "Combo blows to cancel", d.AxesCombo,
             Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
@@ -144,6 +147,7 @@ internal static class Settings
             _debugLog.Value,
             _maxCombo.Value,
             _maxComboMode.Value,
-            _maxComboLoopCap.Value);
+            _maxComboLoopCap.Value,
+            _swapButtons.Value);
     }
 }
