@@ -136,5 +136,5 @@ Not yet verified in game:
 ## Reporting a bug
 
 Set **Debug log** to true under Advanced, reproduce the problem, and attach
-`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett/CombatFlow/issues.
+`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett-valheim-mods/CombatFlow/issues.
 Say which weapon was in your hands and whether you were holding or tapping attack.

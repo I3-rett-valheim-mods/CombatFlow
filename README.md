@@ -1,7 +1,7 @@
 # CombatFlow
 
 [![Thunderstore](https://img.shields.io/badge/Thunderstore-CombatFlow-2f4f8f)](https://thunderstore.io/c/valheim/p/I3_rett/CombatFlow/)
-[![CI](https://github.com/I3-rett/CombatFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/I3-rett/CombatFlow/actions/workflows/ci.yml)
+[![CI](https://github.com/I3-rett-valheim-mods/CombatFlow/actions/workflows/ci.yml/badge.svg)](https://github.com/I3-rett-valheim-mods/CombatFlow/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 [![BepInEx](https://img.shields.io/badge/BepInEx-5.4.2351-lightgrey)](https://thunderstore.io/c/valheim/p/denikson/BepInExPack_Valheim/)
 
@@ -141,5 +141,5 @@ Not yet verified in game:
 ## Reporting a bug
 
 Set **Debug log** to true under Advanced, reproduce the problem, and attach
-`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett/CombatFlow/issues.
+`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett-valheim-mods/CombatFlow/issues.
 Say which weapon was in your hands and whether you were holding or tapping attack.
