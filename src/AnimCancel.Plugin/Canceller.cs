@@ -24,6 +24,12 @@ internal static class Canceller
     /// <summary>Layer-0 fullPathHash of the state that was cancelled, while it still plays.</summary>
     internal static int? CancelledState;
 
+    /// <summary>
+    /// An attack started since the cancel: <see cref="CancelledState"/> then only counts
+    /// while it is current, so a relaunch into the same state keeps its own Speed events.
+    /// </summary>
+    internal static bool Relaunched;
+
     /// <param name="stateTag">Tag of the state being cancelled (default "attack"; a dodge passes its own).</param>
     /// <param name="kindOverride">Log kind when there is no current attack (dodge).</param>
     public static void Cancel(Player p, CancelEmote e, int? stateTag = null, string? kindOverride = null)
@@ -43,6 +49,7 @@ internal static class Canceller
         CancelledState = useNext
             ? animator.GetNextAnimatorStateInfo(0).fullPathHash
             : animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
+        Relaunched = false;
 
         // A previous emote_stop can stay latched when a dodge/attack wins via Any State in the
         // same frame; it would then cut this emote on entry.
@@ -73,8 +80,13 @@ internal static class Canceller
     internal static bool TryConsumeRelaunch(out float dtSinceCancel)
     {
         dtSinceCancel = 0f;
-        // A relaunch of the same state shares its hash; its own Speed events must stay vanilla.
-        CancelledState = null;
+        // The relaunch can happen inside a hit-stop freeze, before the old clip's Speed event
+        // fires: keep the state, but only while it is current (SpeedSkip, relaunched variant).
+        if (CancelledState.HasValue)
+        {
+            Relaunched = true;
+        }
+
         if (!InFlight)
         {
             return false;
@@ -97,6 +109,7 @@ internal static class Canceller
     {
         InFlight = false;
         CancelledState = null;
+        Relaunched = false;
     }
 
     /// <summary>
@@ -125,9 +138,10 @@ internal static class Canceller
         if (CancelledState.HasValue)
         {
             int next = inTransition ? animator.GetNextAnimatorStateInfo(0).fullPathHash : 0;
-            if (SpeedSkip.ShouldForget(CancelledState, current.fullPathHash, next))
+            if (SpeedSkip.ShouldForget(CancelledState, Relaunched, current.fullPathHash, next))
             {
                 CancelledState = null;
+                Relaunched = false;
             }
         }
 

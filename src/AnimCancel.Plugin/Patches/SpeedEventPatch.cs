@@ -9,8 +9,9 @@ namespace AnimCancel.Patches;
 /// Prefix on CharacterAnimEvent.Speed (the clip's Speed animation event, which sets
 /// animator.speed). During the blend out of a cancelled attack, that clip's own events
 /// still fire (sword_secondary: Speed(0.2) just after its Hit) and would undo speed 1.
-/// Local player only; skipped while the cancelled state is current or next, within
-/// SpeedSkip.Window seconds of the cancel (R13: no transition required).
+/// Local player only; skipped while the cancelled state is current or next (only current
+/// once the held button relaunched), within SpeedSkip.Window seconds of the cancel
+/// (R13: no transition required).
 /// </summary>
 [HarmonyPatch(typeof(CharacterAnimEvent), nameof(CharacterAnimEvent.Speed), new[] { typeof(float) })]
 internal static class SpeedEventPatch
@@ -35,7 +36,7 @@ internal static class SpeedEventPatch
             }
 
             int next = animator.IsInTransition(0) ? animator.GetNextAnimatorStateInfo(0).fullPathHash : 0;
-            if (!SpeedSkip.ShouldSkip(Canceller.CancelledState,
+            if (!SpeedSkip.ShouldSkip(Canceller.CancelledState, Canceller.Relaunched,
                     animator.GetCurrentAnimatorStateInfo(0).fullPathHash, next,
                     Time.time - Canceller.LastCancelTime))
             {
@@ -44,7 +45,8 @@ internal static class SpeedEventPatch
 
             if (ReviewLog.On)
             {
-                ReviewLog.Write("speed_skip", ("value", DebugLine.Num(speedScale)));
+                ReviewLog.Write("speed_skip", ("value", DebugLine.Num(speedScale)),
+                    ("relaunched", DebugLine.Bool(Canceller.Relaunched)));
             }
 
             return false;

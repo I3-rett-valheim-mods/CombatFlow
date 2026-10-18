@@ -44,5 +44,31 @@ namespace AnimCancel.Tests
             Assert.True(SpeedSkip.ShouldForget(Attack, currentState: Emote, nextState: 0));
             Assert.False(SpeedSkip.ShouldForget(null, Emote, 0));
         }
+
+        [Fact]
+        public void Relaunched_skips_only_while_cancelled_state_is_current()
+        {
+            // Relaunch inside a hit-stop freeze: the old clip is still current, its Speed(0.2) must stay skipped.
+            Assert.True(SpeedSkip.ShouldSkip(Attack, relaunched: true, currentState: Attack, nextState: Emote, sinceCancel: 0.2f));
+            Assert.True(SpeedSkip.ShouldSkip(Attack, relaunched: true, currentState: Attack, nextState: 0, sinceCancel: 0.2f));
+            // The relaunched attack (same hash) blending in from the emote keeps its own events.
+            Assert.False(SpeedSkip.ShouldSkip(Attack, relaunched: true, currentState: Emote, nextState: Attack, sinceCancel: 0.3f));
+            // Still bounded by the window.
+            Assert.False(SpeedSkip.ShouldSkip(Attack, relaunched: true, currentState: Attack, nextState: Emote, sinceCancel: 0.51f));
+            // Not relaunched: unchanged behaviour.
+            Assert.True(SpeedSkip.ShouldSkip(Attack, relaunched: false, currentState: Emote, nextState: Attack, sinceCancel: 0.05f));
+        }
+
+        [Fact]
+        public void Relaunched_forgets_as_soon_as_cancelled_state_is_not_current()
+        {
+            Assert.False(SpeedSkip.ShouldForget(Attack, relaunched: true, currentState: Attack, nextState: Emote));
+            // Emote current, same-state relaunch already next: forget before it becomes current again.
+            Assert.True(SpeedSkip.ShouldForget(Attack, relaunched: true, currentState: Emote, nextState: Attack));
+            Assert.True(SpeedSkip.ShouldForget(Attack, relaunched: true, currentState: Emote, nextState: 0));
+            Assert.False(SpeedSkip.ShouldForget(null, relaunched: true, currentState: Emote, nextState: 0));
+            // Not relaunched: next still counts.
+            Assert.False(SpeedSkip.ShouldForget(Attack, relaunched: false, currentState: Emote, nextState: Attack));
+        }
     }
 }
