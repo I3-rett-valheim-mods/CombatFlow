@@ -51,7 +51,7 @@ internal static class Settings
             Describe("End the dodge roll as soon as its invincibility window is over.", 100));
 
         _emote = config.Bind("Advanced", "Cancel emote", d.Emote,
-            Describe("The emote the game plays under the hood to cut an animation short, nonono or cheer.", 100, advanced: true));
+            Describe("The emote the game plays under the hood to cut an animation short, NoNoNo or Cheer.", 100, advanced: true));
         _delayAfterHit = config.Bind("Advanced", "Delay after hit (s)", d.DelayAfterHit,
             new ConfigDescription(
                 "Seconds to wait after the hit lands before cancelling, from 0 to 0.3.",

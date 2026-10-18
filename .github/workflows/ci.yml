@@ -82,6 +82,15 @@ jobs:
           elif match.group(1) != version:
               problems.append(f"PluginInfo.cs says {match.group(1)}, manifest says {version}")
 
+          # tcli reads the published version from thunderstore.toml (release.yml
+          # checks the same thing before publishing).
+          toml = pathlib.Path("thunderstore.toml").read_text(encoding="utf-8")
+          toml_match = re.search(r'versionNumber\s*=\s*"([^"]+)"', toml)
+          if not toml_match:
+              problems.append("could not read versionNumber from thunderstore.toml")
+          elif match and toml_match.group(1) != match.group(1):
+              problems.append(f"PluginInfo.cs says {match.group(1)}, thunderstore.toml says {toml_match.group(1)}")
+
           icon = pathlib.Path("package/icon.png")
           if not icon.exists():
               problems.append("package/icon.png is missing")

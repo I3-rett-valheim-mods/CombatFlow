@@ -48,9 +48,9 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 
 ## How much faster
 
-In the author's model the gain is about x1.6-1.8 on the sword. Measured results may
-differ. To measure it yourself, turn on **Debug log** and compare the timestamps of the
-damage events with the mod on and off.
+Modelled at roughly ×1.6–1.8 on the sword; not yet measured in game. To measure it
+yourself, turn on **Debug log** and compare the timestamps of the damage events with the
+mod on and off.
 
 ## Multiplayer
 

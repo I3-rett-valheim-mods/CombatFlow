@@ -33,17 +33,18 @@
     <ProjectReference Include="..\AnimCancel.Core\AnimCancel.Core.csproj" />
   </ItemGroup>
 
-  <!-- Publicizes the game assembly at build time so its private members are
-       reachable as typed members. PrivateAssets keeps the tool out of the output. -->
+  <!-- Publicizes assembly_valheim at build time, so its private members can be used
+       as ordinary typed members. PrivateAssets keeps the tool out of the build output. -->
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.3" PrivateAssets="all" ExcludeAssets="runtime" />
   </ItemGroup>
 
-  <!-- CI has no Valheim: the Digitalroot references are already publicized. -->
+  <!-- CI has no Valheim: build against the Digitalroot references, which are already
+       publicized. BepInEx.Core is pinned so a new release cannot change the build. -->
   <ItemGroup Condition="'$(UseNuGetGameRefs)' == 'true'">
     <PackageReference Include="Digitalroot.Valheim.Common.References" Version="1.0.16" />
     <PackageReference Include="Digitalroot.References.Unity" Version="6000.0.75" />
-    <PackageReference Include="BepInEx.Core" Version="5.*" />
+    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
   </ItemGroup>
 
   <!-- Private=False on everything: never copy game or loader DLLs into bin/. -->

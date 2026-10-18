@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!-- Deliberately netstandard2.0: this project must never be able to reference
-       UnityEngine or BepInEx. Everything here is pure, deterministic logic and is
-       covered by unit tests. A plugin cannot be unit tested as a whole - it needs a
-       live scene and a loaded world - but most of the
-       interesting logic is not Unity-specific, and this target enforces that
-       mechanically: a stray UnityEngine using will not compile. -->
+       UnityEngine or BepInEx. Everything here is pure, deterministic logic covered by
+       unit tests. The plugin as a whole cannot be unit tested, since it needs a live
+       scene and a loaded world, but most of its logic is not Unity-specific, and this
+       target enforces that mechanically: a stray UnityEngine using will not compile. -->
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>10</LangVersion>
