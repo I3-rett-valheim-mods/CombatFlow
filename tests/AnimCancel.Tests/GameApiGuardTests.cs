@@ -162,6 +162,25 @@ public class GameApiGuardTests
         Assert.False(method.IsStatic);
     }
 
+    [Fact]
+    public void Player_SetControls_is_public_with_the_expected_hold_parameters()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Type("Player").Methods.First(m => m.Name == "SetControls");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Void", method.ReturnType.FullName);
+        Assert.Equal("attackHold", method.Parameters[2].Name);
+        Assert.Equal("System.Boolean", method.Parameters[2].ParameterType.FullName);
+        Assert.Equal("secondaryAttackHold", method.Parameters[4].Name);
+        Assert.Equal("System.Boolean", method.Parameters[4].ParameterType.FullName);
+    }
+
     // ----- MessageHud (toggle feedback) --------------------------------------
 
     [Fact]
