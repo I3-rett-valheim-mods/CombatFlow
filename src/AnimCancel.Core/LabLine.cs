@@ -34,6 +34,14 @@ namespace AnimCancel.Core
         /// <summary>The blow is the last of a chain of at least two (lvl is 0-based).</summary>
         public static bool IsLastChain(int lvl, int levels) => levels > 1 && lvl == levels - 1;
 
+        /// <summary>
+        /// The damage multiplier a blow gets from Attack.ModifyDamage (m_damageMultiplier) and, on the last blow of
+        /// a chain, the extra m_lastChainDamageMultiplier (Attack.DoMeleeAttack: levels > 1, lvl == levels - 1,
+        /// multiplier > 1).
+        /// </summary>
+        public static float SwingMultiplier(float damageMultiplier, float lastChainMultiplier, int lvl, int levels) =>
+            IsLastChain(lvl, levels) && lastChainMultiplier > 1f ? damageMultiplier * lastChainMultiplier : damageMultiplier;
+
         /// <summary>The six SetControls buttons packed into one int, for change detection.</summary>
         public static int InputMask(bool attack, bool attackHold, bool secondary, bool secondaryHold, bool block, bool blockHold) =>
             (attack ? 1 : 0) | (attackHold ? 2 : 0) | (secondary ? 4 : 0)

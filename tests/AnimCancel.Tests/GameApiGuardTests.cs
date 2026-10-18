@@ -20,6 +20,8 @@ public class GameApiGuardTests
     [InlineData("Attack", "m_attackAnimation", "System.String")]
     [InlineData("Attack", "m_attackChainLevels", "System.Int32")]
     [InlineData("Attack", "m_currentAttackCainLevel", "System.Int32")] // game's own spelling
+    [InlineData("Attack", "m_damageMultiplier", "System.Single")]          // combo lab: swing multiplier
+    [InlineData("Attack", "m_lastChainDamageMultiplier", "System.Single")]
     [InlineData("Character", "m_animator", "UnityEngine.Animator")]
     [InlineData("Character", "m_animEvent", "CharacterAnimEvent")]
     [InlineData("CharacterAnimEvent", "m_pauseTimer", "System.Single")]

@@ -95,5 +95,16 @@ namespace AnimCancel.Tests
         [InlineData(99, "other")]
         public void TagName_maps_known_tag_hashes(int tag, string expected)
             => Assert.Equal(expected, LabLine.TagName(tag, attack: 10, emote: 20, dodge: 30, idle: 40));
+
+        [Theory]
+        [InlineData(1f, 2f, 0, 3, 1f)]      // first blow of a chain: no last-chain bonus
+        [InlineData(1f, 2f, 2, 3, 2f)]      // last blow of a chain of 3
+        [InlineData(3f, 2f, 2, 3, 6f)]      // both multipliers stack
+        [InlineData(3f, 2f, 0, 1, 3f)]      // a chain of 1 never gets the bonus
+        [InlineData(1f, 1f, 2, 3, 1f)]      // bonus must be > 1
+        [InlineData(1f, 0.5f, 2, 3, 1f)]
+        [InlineData(1.5f, 2f, 1, 3, 1.5f)]  // middle blow
+        public void SwingMultiplier_matches_Attack_ModifyDamage_and_last_chain(float dm, float last, int lvl, int levels, float expected)
+            => Assert.Equal(expected, LabLine.SwingMultiplier(dm, last, lvl, levels), 4);
     }
 }

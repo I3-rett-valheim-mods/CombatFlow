@@ -1,6 +1,7 @@
 using System;
 using AnimCancel.Core;
 using HarmonyLib;
+using UnityEngine;
 
 namespace AnimCancel.Patches;
 
@@ -140,6 +141,57 @@ internal static class LabTriggerPatch
         }
 
         return true;
+    }
+}
+
+/// <summary>
+/// Humanoid.OnAttackTrigger: one line per swing of the local player (the hit frame of the animation), whatever
+/// it hits. mult is what Attack would apply to a hit of this swing. Postfix only, reads fields and the Animator.
+/// </summary>
+[HarmonyPatch(typeof(Humanoid), nameof(Humanoid.OnAttackTrigger))]
+internal static class LabSwingPatch
+{
+    [HarmonyPriority(Priority.Last)]
+    private static void Postfix(Humanoid __instance)
+    {
+        try
+        {
+            if (!ComboLab.On || !ReferenceEquals(__instance, ComboLab.Local()))
+            {
+                return;
+            }
+
+            Attack? atk = __instance.m_currentAttack;
+            if (atk == null)
+            {
+                return;
+            }
+
+            int lvl = atk.m_currentAttackCainLevel;
+            int levels = atk.m_attackChainLevels;
+            float mult = LabLine.SwingMultiplier(atk.m_damageMultiplier, atk.m_lastChainDamageMultiplier, lvl, levels);
+            int cur = 0;
+            int next = 0;
+            Animator? a = __instance.m_animator;
+            if (a != null)
+            {
+                cur = a.GetCurrentAnimatorStateInfo(0).fullPathHash;
+                next = a.IsInTransition(0) ? a.GetNextAnimatorStateInfo(0).fullPathHash : 0;
+            }
+
+            ComboLab.Write("swing",
+                ("anim", ComboLab.Anim(atk)),
+                ("secondary", LabLine.Bit(__instance.m_currentAttackIsSecondary)),
+                ("lvl", lvl.ToString()),
+                ("levels", levels.ToString()),
+                ("mult", LabLine.Dp(mult, 2)),
+                ("state", cur.ToString()),
+                ("next", next.ToString()));
+        }
+        catch (Exception e)
+        {
+            ComboLab.Report(nameof(LabSwingPatch), e);
+        }
     }
 }
 

@@ -8,7 +8,7 @@ namespace AnimCancel;
 /// <summary>
 /// Combo lab log (measurement only): writes "CL ..." lines (see LabLine) for the local
 /// player's inputs, attack starts, ZSyncAnimation triggers, layer-0 state changes,
-/// blocking and hits. Works with Enabled off. Never writes a game field, never calls a
+/// blocking, swings and hits. Works with Enabled off. Never writes a game field, never calls a
 /// game method that caches state (Player.InAttack, IsBlocking): everything is read from
 /// fields or the Animator, or observed in a postfix of the game's own call.
 /// ff is MonoUpdaters.UpdateCount, the key Player.InAttack caches on (bumped once per
