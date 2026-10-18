@@ -1,7 +1,5 @@
 namespace AnimCancel.Core
 {
-    public enum AxesComboMode { FinisherOnly, MiddleAndFinisher }
-
     public enum CancelEmote { NoNoNo, Cheer }
 
     /// <summary>Max combo (sword and berserker axes): Cycle cancels after the second chained swing; Loop keeps
@@ -10,10 +8,6 @@ namespace AnimCancel.Core
 
     public sealed record CancelSettings(
         bool Enabled,
-        bool SwordCombo,
-        bool SwordSecondary,
-        AxesComboMode AxesCombo,
-        bool AxesSecondary,
         bool Dodge,
         CancelEmote Emote,
         float DelayAfterHit,
@@ -26,7 +20,7 @@ namespace AnimCancel.Core
         bool AxesMaxCombo = false)
     {
         public static CancelSettings Default { get; } = new CancelSettings(
-            true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false,
+            true, true, CancelEmote.NoNoNo, 0f, false,
             MaxCombo: true, MaxComboMode: MaxComboMode.Loop, MaxComboLoopCap: 0, SwapButtons: false, AutoParry: false,
             AxesMaxCombo: true);
     }

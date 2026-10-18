@@ -15,26 +15,11 @@ namespace AnimCancel.Core
     public static class CancelPolicy
     {
         public static CancelDecision ShouldCancel(
-            AttackKind kind, int chainLevel, int chainLevels, ClipTiming timing,
+            AttackKind kind, ClipTiming timing,
             int damageEventsSeen, float stateSpeed, CancelSettings s)
         {
             if (!s.Enabled) return new CancelDecision(false, "disabled");
             if (kind == AttackKind.None) return new CancelDecision(false, "not_handled");
-
-            bool on;
-            switch (kind)
-            {
-                case AttackKind.SwordCombo: on = s.SwordCombo; break;
-                case AttackKind.SwordSecondary: on = s.SwordSecondary; break;
-                case AttackKind.AxesSecondary: on = s.AxesSecondary; break;
-                default: on = true; break;
-            }
-            if (!on) return new CancelDecision(false, "toggle_off");
-
-            if (kind == AttackKind.AxesCombo
-                && s.AxesCombo == AxesComboMode.FinisherOnly
-                && chainLevel != chainLevels - 1)
-                return new CancelDecision(false, "finisher_only");
 
             var times = timing.DamageEventTimes;
             if (times.Count == 0 || damageEventsSeen != times.Count)

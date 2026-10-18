@@ -26,7 +26,7 @@ that does not have it.**
   while the secondary button is held, and cancels at the current swing's hit once it is
   released (or after `Max combo loop cap` extra swings, no cap by default). `Cycle` cancels after the third swing instead.
 - **Berserker axes:** cancels after the last hit of a blow, and only when that is faster
-  than the game's own chain point. The last blow of the combo and, if enabled, Cleave are
+  than the game's own chain point. The last blow of the combo and Cleave are
   always eligible.
 - **Berserker axes, max combo (on by default, optional):** after the second hit of the
   combo's last blow, the mod plays the third and fourth blows again straight after it, on
@@ -70,14 +70,10 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 |---|---|---|---|
 | General | Enabled | true | Master switch. |
 | General | Toggle key | F8 | Turns cancelling on or off in game. |
-| Sword | Cancel primary combo | true | Cut the recovery after each primary blow. |
-| Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
-| Sword | Max combo (auto) | true | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
+| Sword | Max combo (auto) | true | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. The final cancel honours Delay after hit. |
 | Sword | Max combo mode | Loop | Used with Max combo (auto) of the sword and of the Berserker axes. `Cycle`: cancel after the chained swings. `Loop`: keep alternating the chained swings while the button is held (secondary for the sword, primary for the axes; only the first attack costs stamina); releasing takes effect at the next hit. |
 | Sword | Max combo loop cap | 0 | Loop mode only, both weapons: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new attack, which costs stamina again. 0 means no cap. |
 | Sword | Swap attack buttons | false | With a sword only, swap the primary and secondary attack buttons (press and hold). Block, dodge, jump, movement, other weapons, tools and build mode are unchanged. Needs Enabled on. |
-| Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
-| Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Berserker axes | Max combo (auto) | true | After the combo's last blow, chain the third and fourth blows into it, then cancel or loop (Max combo mode and loop cap of the Sword section). |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
 | Combat | Auto perfect parry | false | Parry a blockable hit from the front as a perfect block, even mid-attack and without the block button. Blocks with the shield, weapon or bare hands, as the game does; hits from behind and during a dodge are unchanged. Applies to all attackers. Needs Enabled on. |

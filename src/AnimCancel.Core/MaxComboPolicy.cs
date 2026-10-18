@@ -290,8 +290,6 @@ namespace AnimCancel.Core
             ("enabled", DebugLine.Bool(s.Enabled)),
             ("maxCombo", DebugLine.Bool(s.MaxCombo)),
             ("maxComboMode", s.MaxComboMode.ToString()),
-            ("swordCombo", DebugLine.Bool(s.SwordCombo)),
-            ("swordSecondary", DebugLine.Bool(s.SwordSecondary)),
             ("maxComboLoopCap", s.MaxComboLoopCap.ToString(CultureInfo.InvariantCulture)),
             ("axesMaxCombo", DebugLine.Bool(s.AxesMaxCombo)),
         };

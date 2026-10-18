@@ -74,7 +74,7 @@ internal static class AttackTracker
         CancelDecision d = MaxComboRun.OnHit(player, atk, kind, s, clip, clipIsNext, out bool maxComboCancel,
             out int swingHit)
             ? new CancelDecision(maxComboCancel, maxComboCancel ? "ok" : "maxcombo")
-            : CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, swingHit > 0 ? swingHit : seen,
+            : CancelPolicy.ShouldCancel(kind, timing, swingHit > 0 ? swingHit : seen,
                 stateSpeed, s);
         if (s.DelayAfterHit <= 0f)
         {

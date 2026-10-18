@@ -17,14 +17,10 @@ internal static class Settings
     internal static ConfigEntry<bool> Enabled { get; private set; } = null!;
     internal static ConfigEntry<KeyboardShortcut> ToggleKey { get; private set; } = null!;
 
-    private static ConfigEntry<bool> _swordCombo = null!;
-    private static ConfigEntry<bool> _swordSecondary = null!;
     private static ConfigEntry<bool> _maxCombo = null!;
     private static ConfigEntry<MaxComboMode> _maxComboMode = null!;
     private static ConfigEntry<int> _maxComboLoopCap = null!;
     private static ConfigEntry<bool> _swapButtons = null!;
-    private static ConfigEntry<AxesComboMode> _axesCombo = null!;
-    private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _axesMaxCombo = null!;
     private static ConfigEntry<bool> _dodge = null!;
     private static ConfigEntry<bool> _autoParry = null!;
@@ -47,12 +43,8 @@ internal static class Settings
         ToggleKey = config.Bind("General", "Toggle key", new KeyboardShortcut(KeyCode.F8),
             Describe("Turns animation cancelling on or off in game and shows a short message.", 90));
 
-        _swordCombo = config.Bind("Sword", "Cancel primary combo", d.SwordCombo,
-            Describe("Cut the recovery after each blow of the sword primary combo.", 100));
-        _swordSecondary = config.Bind("Sword", "Cancel secondary", d.SwordSecondary,
-            Describe("Cut the recovery after the sword secondary attack.", 90));
         _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
-            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Works even with Cancel secondary off. The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. On by default.", 85));
+            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. On by default.", 85));
         _maxComboMode = config.Bind("Sword", "Max combo mode", d.MaxComboMode,
             Describe("Used by Max combo (auto) of the sword and of the Berserker axes. Sword, Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Sword, Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Berserker axes: the same with the combo finisher and the third and fourth blows, while the primary button is held. Releasing the button cancels at the end of the swing playing (one more swing may play). After Max combo loop cap extra swings a still-held button starts a new attack, which costs stamina again.", 84));
         _maxComboLoopCap = config.Bind("Sword", "Max combo loop cap", d.MaxComboLoopCap,
@@ -63,10 +55,6 @@ internal static class Settings
         _swapButtons = config.Bind("Sword", "Swap attack buttons", d.SwapButtons,
             Describe("With a sword only, swap the primary and secondary attack buttons (press and hold), so the primary button starts the secondary and its Max combo loop and the secondary button the light combo. Block, dodge, jump and movement are unchanged; other weapons, tools and build mode are untouched. Works with a gamepad. Needs Enabled on. Off by default.", 82));
 
-        _axesCombo = config.Bind("Berserker axes", "Combo blows to cancel", d.AxesCombo,
-            Describe("Which blows of the Berserker axes primary combo are cancelled: only the last, or the middle ones as well.", 100));
-        _axesSecondary = config.Bind("Berserker axes", "Cancel secondary (Cleave)", d.AxesSecondary,
-            Describe("Cut the recovery after the Berserker axes secondary attack, Cleave.", 90));
         _axesMaxCombo = config.Bind("Berserker axes", "Max combo (auto)", d.AxesMaxCombo,
             Describe("After the last hit of the primary combo finisher, chain the third and fourth blows into it, then cancel or loop, with Max combo mode and Max combo loop cap of the Sword section. The chained blows keep the finisher's bonus damage. Loop mode keeps going while the primary button is held; releasing it cancels at the end of the swing playing. On by default.", 85));
 
@@ -144,10 +132,6 @@ internal static class Settings
         ComboLabLog = _comboLab.Value;
         _snapshot = new CancelSettings(
             Enabled.Value,
-            _swordCombo.Value,
-            _swordSecondary.Value,
-            _axesCombo.Value,
-            _axesSecondary.Value,
             _dodge.Value,
             _emote.Value,
             _delayAfterHit.Value,

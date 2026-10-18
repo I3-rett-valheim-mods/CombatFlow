@@ -13,10 +13,6 @@ namespace AnimCancel.Tests
             CancelSettings d = CancelSettings.Default;
 
             Assert.True(d.Enabled, nameof(d.Enabled));
-            Assert.True(d.SwordCombo, nameof(d.SwordCombo));
-            Assert.True(d.SwordSecondary, nameof(d.SwordSecondary));
-            Assert.Equal(AxesComboMode.MiddleAndFinisher, d.AxesCombo);
-            Assert.False(d.AxesSecondary, nameof(d.AxesSecondary));
             Assert.True(d.Dodge, nameof(d.Dodge));
             Assert.Equal(CancelEmote.NoNoNo, d.Emote);
             Assert.Equal(0f, d.DelayAfterHit);

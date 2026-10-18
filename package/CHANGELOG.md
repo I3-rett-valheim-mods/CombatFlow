@@ -3,7 +3,7 @@
 ## 0.1.0
 
 - First release.
-- **Sword.** Cuts the recovery after each blow of the primary combo and after the
+- **Sword.** Always cuts the recovery after each blow of the primary combo and after the
   secondary attack, right after the hit lands. Hold attack to chain.
 - **Sword, Max combo (auto).** On by default: after the secondary attack lands,
   plays the second and third swings of the primary combo into it, then cancels.
@@ -11,13 +11,12 @@
   swings while the secondary button is held; only the first secondary costs stamina) or `Cycle`.
   `Max combo loop cap` (default 0 = no cap; 1 to 1000 to limit) sets how many extra swings Loop chains
   before it cancels.
-  Works with Cancel secondary off and honours Delay after hit.
+  Honours Delay after hit.
 - **Sword, Swap attack buttons.** Off by default: with a sword, the primary and
   secondary attack buttons trade places, so holding the primary button runs the Max combo
   loop. Other weapons, tools and build mode are untouched; off whenever the mod is off.
-- **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
-  middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
-  faster than the game's own chain point.
+- **Berserker axes.** Cuts the recovery after the combo blows and after Cleave. A blow is
+  only cut when that is faster than the game's own chain point.
 - **Berserker axes, Max combo (auto).** On by default: after the combo's last blow lands,
   plays the third and fourth blows into it, so they keep its bonus damage and cost no extra
   stamina, then cancels. Uses the sword's `Max combo mode` and `Max combo loop cap`; `Loop`
@@ -33,4 +32,8 @@
 - Configuration through BepInEx ConfigurationManager, including the emote used under the
   hood, a delay after the hit, and a debug log for measuring damage output. With Debug log
   off (the default) the mod only logs its startup line and errors.
+- No per-attack on/off settings: sword primary and secondary, Berserker axes combo blows and Cleave
+  are always cancelled (axes blows only when that beats the chain point). Old keys left in an
+  existing config file (`Cancel primary combo`, `Cancel secondary`, `Combo blows to cancel`,
+  `Cancel secondary (Cleave)`) are simply ignored.
 - Client-side only: the cancel touches your own animator and never sends an emote.
