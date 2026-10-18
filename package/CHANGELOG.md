@@ -18,6 +18,10 @@
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
   faster than the game's own chain point.
+- **Berserker axes, Max combo (auto).** On by default: after the combo's last blow lands,
+  plays the third and fourth blows into it, so they keep its bonus damage and cost no extra
+  stamina, then cancels. Uses the sword's `Max combo mode` and `Max combo loop cap`; `Loop`
+  keeps going while the primary button is held.
 - **Dodge roll.** Ends the roll as soon as its invincibility window is over.
 - **Auto perfect parry.** Off by default (Combat section): a blockable hit from the front is
   parried as a perfect block, even mid-attack and without the block button. Blocks with the shield,

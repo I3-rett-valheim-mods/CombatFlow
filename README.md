@@ -28,6 +28,13 @@ that does not have it.**
 - **Berserker axes:** cancels after the last hit of a blow, and only when that is faster
   than the game's own chain point. The last blow of the combo and, if enabled, Cleave are
   always eligible.
+- **Berserker axes, max combo (on by default, optional):** after the second hit of the
+  combo's last blow, the mod plays the third and fourth blows again straight after it, on
+  your own animator. The game counts them as part of the last blow, so they keep its bonus
+  damage and cost no extra stamina. It shares `Max combo mode` and `Max combo loop cap` with
+  the sword: `Loop` keeps alternating the third and fourth blows while the primary button is
+  held and cancels at the end of the current blow once it is released; `Cycle` cancels after
+  one extra third and fourth blow.
 - **Dodge roll:** ends the roll as soon as its invincibility window is over. The roll
   covers a shorter distance.
 
@@ -66,11 +73,12 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Sword | Cancel primary combo | true | Cut the recovery after each primary blow. |
 | Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
 | Sword | Max combo (auto) | true | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
-| Sword | Max combo mode | Loop | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held (only the first secondary costs stamina); releasing takes effect at the next hit. |
-| Sword | Max combo loop cap | 0 | Loop mode only: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new secondary, which costs stamina again. 0 means no cap. |
+| Sword | Max combo mode | Loop | Used with Max combo (auto) of the sword and of the Berserker axes. `Cycle`: cancel after the chained swings. `Loop`: keep alternating the chained swings while the button is held (secondary for the sword, primary for the axes; only the first attack costs stamina); releasing takes effect at the next hit. |
+| Sword | Max combo loop cap | 0 | Loop mode only, both weapons: extra swings chained past the first pass before the run ends with a cancel, 0 to 1000. A still-held button then starts a new attack, which costs stamina again. 0 means no cap. |
 | Sword | Swap attack buttons | false | With a sword only, swap the primary and secondary attack buttons (press and hold). Block, dodge, jump, movement, other weapons, tools and build mode are unchanged. Needs Enabled on. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
+| Berserker axes | Max combo (auto) | true | After the combo's last blow, chain the third and fourth blows into it, then cancel or loop (Max combo mode and loop cap of the Sword section). |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
 | Combat | Auto perfect parry | false | Parry a blockable hit from the front as a perfect block, even mid-attack and without the block button. Blocks with the shield, weapon or bare hands, as the game does; hits from behind and during a dodge are unchanged. Applies to all attackers. Needs Enabled on. |
 | Advanced | Cancel emote | NoNoNo | The emote played under the hood, `NoNoNo` or `Cheer`. |
@@ -91,6 +99,8 @@ counting each swing's damage multiplier; factor against the vanilla secondary):
 | Cancel, secondary | 2.68 | x1.63 |
 | Max combo, Cycle | 5.01 | x3.05 |
 | Max combo, Loop | 7.63 (peak 8.56) | x4.65 |
+
+These figures are for the sword. Berserker axes max combo has not been measured yet.
 
 Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
 secondary (the chain swings are part of it), so stamina stays flat while you hold the button. After `Max combo loop cap` extra swings a
