@@ -24,7 +24,9 @@ internal static class Canceller
     /// <summary>Layer-0 fullPathHash of the state that was cancelled, while it still plays.</summary>
     internal static int? CancelledState;
 
-    public static void Cancel(Player p, CancelEmote e)
+    /// <param name="stateTag">Tag of the state being cancelled (default "attack"; a dodge passes its own).</param>
+    /// <param name="kindOverride">Log kind when there is no current attack (dodge).</param>
+    public static void Cancel(Player p, CancelEmote e, int? stateTag = null, string? kindOverride = null)
     {
         Animator animator = p.m_animator;
         if (animator == null)
@@ -35,8 +37,9 @@ internal static class Canceller
         float speedBefore = animator.speed;
         float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
 
-        // Same rule as ClipTimingCache: the next state when blending into the attack.
-        bool useNext = animator.IsInTransition(0) && animator.GetNextAnimatorStateInfo(0).tagHash == TagAttack;
+        // Same rule as ClipTimingCache: the next state when blending into the cancelled state.
+        bool useNext = animator.IsInTransition(0)
+                       && animator.GetNextAnimatorStateInfo(0).tagHash == (stateTag ?? TagAttack);
         CancelledState = useNext
             ? animator.GetNextAnimatorStateInfo(0).fullPathHash
             : animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
@@ -54,7 +57,7 @@ internal static class Canceller
         {
             Attack? atk = p.m_currentAttack;
             ReviewLog.Write("cancel",
-                ("kind", AttackClassifier.Classify(atk?.m_attackAnimation).ToString()),
+                ("kind", kindOverride ?? AttackClassifier.Classify(atk?.m_attackAnimation).ToString()),
                 ("lvl", (atk?.m_currentAttackCainLevel ?? 0).ToString()),
                 ("emote", e.ToString()),
                 ("pauseTimer", DebugLine.Num(pauseTimer)),
