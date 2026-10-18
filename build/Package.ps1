@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Builds AnimCancel and produces a Thunderstore-ready zip.
+    Builds CombatFlow and produces a Thunderstore-ready zip.
 
 .DESCRIPTION
     Builds Release, checks that package/manifest.json agrees with PluginInfo.Version,
@@ -28,7 +28,7 @@ $stageDir = Join-Path $outDir 'stage'
 
 # --- version agreement -----------------------------------------------------
 
-$pluginInfo = Get-Content (Join-Path $root 'src/AnimCancel.Plugin/PluginInfo.cs') -Raw
+$pluginInfo = Get-Content (Join-Path $root 'src/CombatFlow.Plugin/PluginInfo.cs') -Raw
 if ($pluginInfo -notmatch 'Version\s*=\s*"([^"]+)"') {
     throw 'Could not read Version from PluginInfo.cs.'
 }
@@ -40,12 +40,12 @@ if ($manifest.version_number -ne $sourceVersion) {
     throw "Version mismatch: PluginInfo.cs says $sourceVersion, manifest.json says $($manifest.version_number)."
 }
 
-Write-Host "Packaging AnimCancel $sourceVersion ($Configuration)"
+Write-Host "Packaging CombatFlow $sourceVersion ($Configuration)"
 
 # --- build -----------------------------------------------------------------
 
 # Deploy is left off, so packaging never writes into a play profile.
-& dotnet build (Join-Path $root 'AnimCancel.sln') -c $Configuration -v m -nologo
+& dotnet build (Join-Path $root 'CombatFlow.sln') -c $Configuration -v m -nologo
 if ($LASTEXITCODE -ne 0) {
     throw "Build failed with exit code $LASTEXITCODE."
 }
@@ -58,8 +58,8 @@ if (Test-Path $stageDir) {
 New-Item -ItemType Directory -Path $stageDir -Force | Out-Null
 
 $expected = @(
-    @{ Source = "src/AnimCancel.Plugin/bin/$Configuration/AnimCancel.dll"; Name = 'AnimCancel.dll' }
-    @{ Source = "src/AnimCancel.Plugin/bin/$Configuration/AnimCancel.Core.dll"; Name = 'AnimCancel.Core.dll' }
+    @{ Source = "src/CombatFlow.Plugin/bin/$Configuration/CombatFlow.dll"; Name = 'CombatFlow.dll' }
+    @{ Source = "src/CombatFlow.Plugin/bin/$Configuration/CombatFlow.Core.dll"; Name = 'CombatFlow.Core.dll' }
     @{ Source = 'package/manifest.json'; Name = 'manifest.json' }
     @{ Source = 'package/README.md'; Name = 'README.md' }
     @{ Source = 'package/CHANGELOG.md'; Name = 'CHANGELOG.md' }
@@ -88,7 +88,7 @@ finally {
 
 # --- zip, then verify ------------------------------------------------------
 
-$zipPath = Join-Path $outDir "AnimCancel-$sourceVersion.zip"
+$zipPath = Join-Path $outDir "CombatFlow-$sourceVersion.zip"
 
 # @() everywhere a pipeline result is counted: Where-Object yields a bare object
 # rather than an array when it matches exactly once, and under StrictMode reading

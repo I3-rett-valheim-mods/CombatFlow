@@ -1,0 +1,28 @@
+using CombatFlow.Core;
+using Xunit;
+
+namespace CombatFlow.Tests
+{
+    public class CancelSettingsTests
+    {
+        // Mirrors docs/DESIGN.md "Configuration". The plugin binds its config defaults
+        // from CancelSettings.Default, so this table is what a fresh install gets.
+        [Fact]
+        public void Default_matches_design_table()
+        {
+            CancelSettings d = CancelSettings.Default;
+
+            Assert.True(d.Enabled, nameof(d.Enabled));
+            Assert.True(d.Dodge, nameof(d.Dodge));
+            Assert.Equal(CancelEmote.NoNoNo, d.Emote);
+            Assert.Equal(0f, d.DelayAfterHit);
+            Assert.False(d.DebugLog, nameof(d.DebugLog));
+            Assert.True(d.MaxCombo, nameof(d.MaxCombo));
+            Assert.Equal(MaxComboMode.Loop, d.MaxComboMode);
+            Assert.Equal(0, d.MaxComboLoopCap);
+            Assert.False(d.SwapButtons, nameof(d.SwapButtons));
+            Assert.False(d.AutoParry, nameof(d.AutoParry));
+            Assert.True(d.AxesMaxCombo, nameof(d.AxesMaxCombo));
+        }
+    }
+}

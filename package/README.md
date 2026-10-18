@@ -1,4 +1,4 @@
-# AnimCancel
+# CombatFlow
 
 Cuts the recovery of your sword and Berserker axe attacks, and of the dodge roll, right
 after the hit lands, so you attack faster. It does what the emote animation-cancel does
@@ -59,7 +59,7 @@ staggered, encumbered, in build mode or during a minor action.
 
 ## Configuration
 
-Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManager.
+Edit `BepInEx/config/I3_rett.CombatFlow.cfg`, or use BepInEx ConfigurationManager.
 
 | Section | Key | Default | What it does |
 |---|---|---|---|
@@ -117,5 +117,5 @@ It patches these game methods, so other mods that patch the same ones may confli
 ## Reporting a bug
 
 Set **Debug log** to true under Advanced, reproduce the problem, and attach
-`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett/AnimCancel/issues.
+`BepInEx/LogOutput.log` to an issue at https://github.com/I3-rett/CombatFlow/issues.
 Say which weapon was in your hands and whether you were holding or tapping attack.

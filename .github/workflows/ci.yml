@@ -20,7 +20,7 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      # Only the test project, deliberately. AnimCancel.Plugin references
+      # Only the test project, deliberately. CombatFlow.Plugin references
       # assembly_valheim.dll from a local Steam install, which no runner has, so a
       # whole-solution build cannot work here. The test project references Core
       # alone, which is where the logic that can be tested lives.
@@ -29,8 +29,8 @@ jobs:
           # The API guard tests read the installed game assemblies and can assert
           # nothing without them. They normally fail the run rather than pass
           # silently; this acknowledges that CI is the one place they cannot run.
-          ANIMCANCEL_ALLOW_MISSING_GAME: '1'
-        run: dotnet test tests/AnimCancel.Tests/AnimCancel.Tests.csproj --configuration Release --nologo --verbosity minimal
+          COMBATFLOW_ALLOW_MISSING_GAME: '1'
+        run: dotnet test tests/CombatFlow.Tests/CombatFlow.Tests.csproj --configuration Release --nologo --verbosity minimal
 
   package:
     name: Validate package metadata
@@ -75,7 +75,7 @@ jobs:
 
           # PluginInfo is the source of truth; a mismatch ships a package whose
           # version does not match the plugin inside it.
-          source = pathlib.Path("src/AnimCancel.Plugin/PluginInfo.cs").read_text(encoding="utf-8")
+          source = pathlib.Path("src/CombatFlow.Plugin/PluginInfo.cs").read_text(encoding="utf-8")
           match = re.search(r'Version\s*=\s*"([^"]+)"', source)
           if not match:
               problems.append("could not read Version from PluginInfo.cs")

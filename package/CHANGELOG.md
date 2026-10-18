@@ -3,6 +3,7 @@
 ## 0.1.0
 
 - First release.
+- Renamed from AnimCancel before the first release; the config file is now `I3_rett.CombatFlow.cfg`.
 - **Sword.** Always cuts the recovery after each blow of the primary combo and after the
   secondary attack, right after the hit lands. Hold attack to chain.
 - **Sword, Max combo (auto).** On by default: after the secondary attack lands,

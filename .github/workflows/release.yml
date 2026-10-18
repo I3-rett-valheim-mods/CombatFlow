@@ -34,7 +34,7 @@ jobs:
       - name: Check the tag agrees with the source
         shell: pwsh
         run: |
-          $plugin = (Select-String -Path src/AnimCancel.Plugin/PluginInfo.cs -Pattern 'Version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          $plugin = (Select-String -Path src/CombatFlow.Plugin/PluginInfo.cs -Pattern 'Version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
           $manifest = (Get-Content package/manifest.json -Raw | ConvertFrom-Json).version_number
           $toml = (Select-String -Path thunderstore.toml -Pattern 'versionNumber\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
 
@@ -54,15 +54,15 @@ jobs:
 
       - name: Test
         env:
-          ANIMCANCEL_ALLOW_MISSING_GAME: '1'
-        run: dotnet test tests/AnimCancel.Tests/AnimCancel.Tests.csproj -c Release --nologo --verbosity minimal
+          COMBATFLOW_ALLOW_MISSING_GAME: '1'
+        run: dotnet test tests/CombatFlow.Tests/CombatFlow.Tests.csproj -c Release --nologo --verbosity minimal
 
       # No Valheim on a runner, so this builds against published reference
       # assemblies. Their file names carry a -publicized suffix but the assembly
       # identity inside is unchanged, so the output binds to the real game
       # assemblies at runtime exactly as a local build does.
       - name: Build
-        run: dotnet build src/AnimCancel.Plugin/AnimCancel.Plugin.csproj -c Release --nologo -p:UseNuGetGameRefs=true
+        run: dotnet build src/CombatFlow.Plugin/CombatFlow.Plugin.csproj -c Release --nologo -p:UseNuGetGameRefs=true
 
       - name: Assemble the package
         shell: pwsh
@@ -71,8 +71,8 @@ jobs:
           New-Item -ItemType Directory -Path $stage -Force | Out-Null
 
           $files = @(
-            "src/AnimCancel.Plugin/bin/Release/AnimCancel.dll",
-            "src/AnimCancel.Plugin/bin/Release/AnimCancel.Core.dll",
+            "src/CombatFlow.Plugin/bin/Release/CombatFlow.dll",
+            "src/CombatFlow.Plugin/bin/Release/CombatFlow.Core.dll",
             "package/manifest.json",
             "package/icon.png",
             "package/README.md",
@@ -83,7 +83,7 @@ jobs:
             Copy-Item $file $stage -Force
           }
 
-          $zip = "build/out/AnimCancel-$env:VERSION.zip"
+          $zip = "build/out/CombatFlow-$env:VERSION.zip"
           Compress-Archive -Path "$stage/*" -DestinationPath $zip -Force
 
           # Reopen and count, because a partial archive is written silently when
@@ -117,7 +117,7 @@ jobs:
             gh release upload "${{ github.ref_name }}" "$ZIP" --clobber
           else
             gh release create "${{ github.ref_name }}" "$ZIP" \
-              --title "AnimCancel $VERSION" \
+              --title "CombatFlow $VERSION" \
               --notes-file release-notes.md \
               --verify-tag
           fi
@@ -142,5 +142,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: AnimCancel-${{ env.VERSION }}
+          name: CombatFlow-${{ env.VERSION }}
           path: ${{ env.ZIP }}

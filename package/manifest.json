@@ -1,8 +1,8 @@
 {
-  "name": "AnimCancel",
+  "name": "CombatFlow",
   "author": "I3_rett",
   "version_number": "0.1.0",
-  "website_url": "https://github.com/I3-rett/AnimCancel",
+  "website_url": "https://github.com/I3-rett/CombatFlow",
   "description": "Client-side: cuts sword and berserker-axe attack recovery and the dodge roll right after the hit lands, like the emote animation-cancel, with perfect timing. Hold attack to chain.",
   "dependencies": [
     "denikson-BepInExPack_Valheim-5.4.2351"
