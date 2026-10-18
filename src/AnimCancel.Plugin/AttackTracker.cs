@@ -67,6 +67,11 @@ internal static class AttackTracker
                             ?? NoTiming;
         int lvl = atk.m_currentAttackCainLevel;
         CancelDecision d = CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, seen, stateSpeed, s);
+        if (s.DelayAfterHit <= 0f)
+        {
+            // The delayed path checks the stagger at its due time instead.
+            d = CancelPolicy.ShouldFireNow(d, player.IsStaggering());
+        }
 
         if (ReviewLog.On)
         {

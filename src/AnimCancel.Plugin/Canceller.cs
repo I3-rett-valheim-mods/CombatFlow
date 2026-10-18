@@ -33,6 +33,12 @@ internal static class Canceller
     /// <summary>Time.time layer 0 was first seen fully in the emote while in flight; -1 otherwise.</summary>
     private static float _fullyInEmoteSince = -1f;
 
+    /// <summary>
+    /// The emote trigger set by the last cancel until it is known to be spent. If it lost to
+    /// another trigger set the same frame it would stay latched and cut whatever comes next.
+    /// </summary>
+    private static string? _emoteTrigger;
+
     /// <param name="stateTag">Tag of the state being cancelled (default "attack"; a dodge passes its own).</param>
     /// <param name="kindOverride">Log kind when there is no current attack (dodge).</param>
     public static void Cancel(Player p, CancelEmote e, int? stateTag = null, string? kindOverride = null)
@@ -57,7 +63,8 @@ internal static class Canceller
         // A previous emote_stop can stay latched when a dodge/attack wins via Any State in the
         // same frame; it would then cut this emote on entry.
         animator.ResetTrigger(EmoteStop);
-        animator.SetTrigger(CancelEmotes.Trigger(e));
+        _emoteTrigger = CancelEmotes.Trigger(e);
+        animator.SetTrigger(_emoteTrigger);
         string plan = ApplySpeedPlan(p, animator, pauseTimer);
 
         InFlight = true;
@@ -99,11 +106,12 @@ internal static class Canceller
         InFlight = false;
         _fullyInEmoteSince = -1f;
         dtSinceCancel = Time.time - LastCancelTime;
-        // Do not let an unconsumed emote_stop wait for the next emote.
+        // Do not let an unconsumed emote_stop or emote trigger wait for the next transition.
         Player? p = Player.m_localPlayer;
         if (p != null && p.m_animator != null)
         {
             p.m_animator.ResetTrigger(EmoteStop);
+            ResetEmoteTrigger(p.m_animator);
         }
 
         return true;
@@ -116,6 +124,7 @@ internal static class Canceller
         CancelledState = null;
         Relaunched = false;
         _fullyInEmoteSince = -1f;
+        _emoteTrigger = null;
     }
 
     /// <summary>
@@ -158,6 +167,12 @@ internal static class Canceller
         }
 
         bool currentIsEmote = current.tagHash == TagEmote;
+        bool nextIsEmote = inTransition && animator.GetNextAnimatorStateInfo(0).tagHash == TagEmote;
+        if (_emoteTrigger != null && RecoveryPolicy.EmoteTriggerSpent(currentIsEmote, nextIsEmote))
+        {
+            ResetEmoteTrigger(animator);
+        }
+
         float now = Time.time;
         if (currentIsEmote && !inTransition)
         {
@@ -185,6 +200,8 @@ internal static class Canceller
             StopEmote(p, animator);
         }
 
+        ResetEmoteTrigger(animator);
+
         InFlight = false;
         _fullyInEmoteSince = -1f;
 
@@ -192,6 +209,15 @@ internal static class Canceller
         {
             ReviewLog.Write(d.Action == RecoveryAction.Stop ? "recovery_stop" : "recovery_expire",
                 ("dtSinceCancel", DebugLine.Num(now - LastCancelTime)), ("reason", d.Reason));
+        }
+    }
+
+    private static void ResetEmoteTrigger(Animator animator)
+    {
+        if (_emoteTrigger != null)
+        {
+            animator.ResetTrigger(_emoteTrigger);
+            _emoteTrigger = null;
         }
     }
 

@@ -60,5 +60,12 @@ namespace AnimCancel.Core
                 return new RecoveryDecision(fullyInEmote ? RecoveryAction.Stop : RecoveryAction.Expire, "expired");
             return Wait;
         }
+
+        /// <summary>
+        /// The emote trigger has been consumed once layer 0 is in, or blending into, the emote;
+        /// from then on it is reset so a copy that lost to another trigger cannot fire later.
+        /// </summary>
+        public static bool EmoteTriggerSpent(bool currentTagIsEmote, bool nextTagIsEmote)
+            => currentTagIsEmote || nextTagIsEmote;
     }
 }

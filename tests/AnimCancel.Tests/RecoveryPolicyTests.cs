@@ -55,5 +55,13 @@ namespace AnimCancel.Tests
             // Fully in our emote at expiry: stop it.
             Check(D(true, true, false, true, inEmoteFor: 0.05f, sinceCancel: 1.6f), RecoveryAction.Stop, "expired");
         }
+
+        [Fact]
+        public void Emote_trigger_spent_once_emote_is_current_or_next()
+        {
+            Assert.True(RecoveryPolicy.EmoteTriggerSpent(currentTagIsEmote: true, nextTagIsEmote: false));
+            Assert.True(RecoveryPolicy.EmoteTriggerSpent(currentTagIsEmote: false, nextTagIsEmote: true));
+            Assert.False(RecoveryPolicy.EmoteTriggerSpent(false, false));
+        }
     }
 }

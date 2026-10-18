@@ -30,5 +30,15 @@ namespace AnimCancel.Tests
         [Fact]
         public void Left_attack_state_during_delay_is_superseded()
             => Check(CancelPolicy.ShouldFireDelayed(true, true, false, false), false, "superseded");
+
+        [Fact]
+        public void Immediate_cancel_while_staggering_is_superseded()
+        {
+            // The stagger trigger would win over the emote trigger and leave it latched.
+            Check(CancelPolicy.ShouldFireNow(new CancelDecision(true, "ok"), staggering: true), false, "superseded");
+            Check(CancelPolicy.ShouldFireNow(new CancelDecision(true, "ok"), staggering: false), true, "ok");
+            // A refusal keeps its own reason.
+            Check(CancelPolicy.ShouldFireNow(new CancelDecision(false, "not_last_hit"), staggering: true), false, "not_last_hit");
+        }
     }
 }

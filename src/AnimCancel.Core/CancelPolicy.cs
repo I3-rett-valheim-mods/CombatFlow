@@ -60,6 +60,13 @@ namespace AnimCancel.Core
             return new CancelDecision(true, "ok");
         }
 
+        /// <summary>
+        /// Immediate cancel (no delay): a stagger set in the same frame would win over the
+        /// emote trigger and leave it latched, to fire after the stagger. Refused as superseded.
+        /// </summary>
+        public static CancelDecision ShouldFireNow(CancelDecision d, bool staggering)
+            => d.Cancel && staggering ? new CancelDecision(false, "superseded") : d;
+
         public static CancelDecision ShouldCancelDodge(CancelSettings s)
         {
             if (!s.Enabled) return new CancelDecision(false, "disabled");
