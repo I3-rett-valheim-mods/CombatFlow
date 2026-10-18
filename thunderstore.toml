@@ -10,7 +10,7 @@ schemaVersion = "0.0.1"
 namespace = "I3_rett"
 name = "CombatFlow"
 versionNumber = "0.1.0"
-description = "Client-side: cuts sword and berserker-axe attack recovery and the dodge roll right after the hit lands, like the emote animation-cancel, with perfect timing. Hold attack to chain."
+description = "Client-side. Cuts sword, berserker-axe and dodge recovery right after the hit, like the emote cancel. Optional Max combo (auto) and Auto perfect parry change how the game counts attacks and blocks: check your server's rules. Both can be turned off."
 websiteUrl = "https://github.com/I3-rett/CombatFlow"
 containsNsfwContent = false
 

@@ -3,6 +3,15 @@
 ## 0.1.0
 
 - First release.
+- Heads-up: Max combo (auto) exploits how the game counts the current attack (the damage multiplier is
+  carried into other swings, stamina is paid once) and Auto perfect parry forces the game's perfect-block
+  path. Both are client-side and can change the balance on multiplayer servers: check the server's
+  rules. Both can be switched off.
+- Measured on the dummy (base damage per second): sword 1.5 to 1.6 vanilla, 2.5 to 2.7 with the cancel,
+  7.6 with Max combo Loop; Berserker axes 2.57 vanilla, 3.2 to 3.4 with the cancel, about 6.4 with Loop
+  once it runs. Loop weapon durability drops fast.
+- Known limitations, not yet verified in game: Auto perfect parry against real creatures, Swap attack
+  buttons, what other players see in multiplayer.
 - Renamed from AnimCancel before the first release; the config file is now `I3_rett.CombatFlow.cfg`.
 - **Sword.** Always cuts the recovery after each blow of the primary combo and after the
   secondary attack, right after the hit lands. Hold attack to chain.

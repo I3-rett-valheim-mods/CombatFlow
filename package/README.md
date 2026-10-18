@@ -8,6 +8,12 @@ timing. You just hold attack.
 **Client-side only. The server does not need it, and it will not stop you joining a server
 that does not have it.**
 
+**Read this before using it on a server.** Two options go beyond timing. *Max combo (auto)*
+exploits how the game counts the current attack: the damage multiplier of one swing is carried
+into other swings, and stamina is paid once. *Auto perfect parry* forces the game's own perfect-block
+path. Both run on your client and can change the balance on multiplayer servers, so check the
+server's rules first. Both can be switched off in the config (Auto perfect parry is off by default).
+
 ## What it does
 
 - **Sword, primary combo:** cancels the recovery after each blow, right after the hit.
@@ -91,7 +97,11 @@ counting each swing's damage multiplier; factor against the vanilla secondary):
 | Max combo, Cycle | 5.01 | x3.05 |
 | Max combo, Loop | 7.63 (peak 8.56) | x4.65 |
 
-These figures are for the sword. Berserker axes max combo has not been measured yet.
+Berserker axes, same method: vanilla 2.57, cancel 3.2 to 3.4, Max combo Loop about 6.4 once the
+loop runs (5.1 on average, counting the ramp-up).
+
+The sword loop carries the secondary (a narrow 10 degree hit, one target); the axes loop carries
+the finisher (90 degrees, several targets). Weapon durability drops fast while looping, so repair often.
 
 Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
 secondary (the chain swings are part of it), so stamina stays flat while you hold the button. After `Max combo loop cap` extra swings a
@@ -103,7 +113,7 @@ reports, not something to leave on.
 
 ## Multiplayer
 
-The cancel only touches your own character's animation on your own machine. The game never
+Client-only. The cancel only touches your own character's animation on your own machine. The game never
 sends an emote, so other players see your attacks but no emote. Animation speed is synced
 by the game, so they may see your recoveries finish faster. Nothing is installed
 server-side. The mod appears in the plugin list like any other.
@@ -111,8 +121,17 @@ server-side. The mod appears in the plugin list like any other.
 ## Compatibility
 
 It patches these game methods, so other mods that patch the same ones may conflict:
-`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Humanoid.UnequipItem`, `Player.OnDodgeMortal`,
-`Player.SetControls` and `CharacterAnimEvent.Speed`.
+`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Humanoid.UnequipItem`, `Humanoid.IsBlocking`,
+`Player.OnDodgeMortal`, `Player.SetControls`, `Character.RPC_Damage` and `CharacterAnimEvent.Speed`.
+The Combo lab log also observes `ZSyncAnimation.SetTrigger` and `Character.Damage`.
+
+## Known limitations
+
+Not yet verified in game:
+
+- Auto perfect parry against real creatures (only tested on the training dummy so far).
+- Swap attack buttons.
+- What other players see in multiplayer.
 
 ## Reporting a bug
 
