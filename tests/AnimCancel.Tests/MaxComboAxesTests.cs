@@ -249,27 +249,6 @@ namespace AnimCancel.Tests
         }
 
         [Fact]
-        public void Handles_only_hits_of_the_run_instance_for_axes()
-        {
-            // A plain axes combo blow (another instance) after a run is not swallowed.
-            Assert.False(MaxComboPolicy.Handles(Axes, AttackKind.AxesCombo, routes: false, wasRunning: true, sameInstance: false));
-            Assert.True(MaxComboPolicy.Handles(Axes, AttackKind.AxesCombo, routes: false, wasRunning: true, sameInstance: true));
-            Assert.True(MaxComboPolicy.Handles(Axes, AttackKind.AxesCombo, routes: true, wasRunning: false, sameInstance: false));
-            Assert.False(MaxComboPolicy.Handles(Axes, AttackKind.AxesSecondary, routes: false, wasRunning: true, sameInstance: true));
-            Assert.False(MaxComboPolicy.Handles(Axes, AttackKind.AxesCombo, routes: false, wasRunning: false, sameInstance: true));
-        }
-
-        [Fact]
-        public void Handles_for_the_sword_profile_is_unchanged()
-        {
-            MaxComboProfile w = MaxComboProfile.Sword;
-            Assert.True(MaxComboPolicy.Handles(w, AttackKind.SwordSecondary, false, true, sameInstance: false));
-            Assert.False(MaxComboPolicy.Handles(w, AttackKind.SwordCombo, false, true, sameInstance: true));
-            Assert.False(MaxComboPolicy.Handles(w, AttackKind.SwordSecondary, false, false, sameInstance: true));
-            Assert.True(MaxComboPolicy.Handles(w, AttackKind.SwordSecondary, true, false, sameInstance: false));
-        }
-
-        [Fact]
         public void Weapon_key_for_every_run_line()
         {
             Assert.Equal(new[] { ("weapon", "axes") }, MaxComboPolicy.WeaponFields(Axes));

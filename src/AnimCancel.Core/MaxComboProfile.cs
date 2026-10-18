@@ -38,18 +38,11 @@ namespace AnimCancel.Core
         /// <summary>Loop mode keeps going while the primary (true) or the secondary (false) button is held.</summary>
         public bool HoldPrimary { get; }
 
-        /// <summary>
-        /// A running run also owns hits of another Attack instance of <see cref="Kind"/> (no plain cancel for
-        /// them). True for the sword (a hit of a new secondary is the start of a new run anyway); false for the
-        /// axes, whose earlier combo blows are the same kind and must keep their plain cancel.
-        /// </summary>
-        public bool OwnsOtherInstances { get; }
-
         private readonly bool _axes;
 
         private MaxComboProfile(string weapon, AttackKind kind, string startClip, int startHits, string swing1Clip,
             int swing1Hits, string swing2Clip, int swing2Hits, string swing1Trigger, string swing2Trigger,
-            string[] swingTriggers, bool holdPrimary, bool ownsOtherInstances, bool axes)
+            string[] swingTriggers, bool holdPrimary, bool axes)
         {
             Weapon = weapon;
             Kind = kind;
@@ -64,7 +57,6 @@ namespace AnimCancel.Core
             SwingTriggers = swingTriggers;
             AbortTriggers = new[] { swing1Trigger, swing2Trigger };
             HoldPrimary = holdPrimary;
-            OwnsOtherInstances = ownsOtherInstances;
             _axes = axes;
         }
 
@@ -76,7 +68,7 @@ namespace AnimCancel.Core
             "sword", AttackKind.SwordSecondary,
             MaxComboPolicy.SecondaryClip, 1, MaxComboPolicy.Swing1Clip, 1, MaxComboPolicy.Swing2Clip, 1,
             MaxComboPolicy.Swing1Trigger, MaxComboPolicy.Swing2Trigger, MaxComboPolicy.SwingTriggers,
-            holdPrimary: false, ownsOtherInstances: true, axes: false);
+            holdPrimary: false, axes: false);
 
         /// <summary>
         /// Berserker axes: carries the combo finisher (dualaxes level 3 of 4, ×2). The finisher clip
@@ -87,7 +79,7 @@ namespace AnimCancel.Core
             "axes", AttackKind.AxesCombo,
             AxesFinisherClip, 2, AxesSwing1Clip, 2, AxesFinisherClip, 2,
             "dualaxes2", "dualaxes3", new[] { "dualaxes0", "dualaxes1", "dualaxes2", "dualaxes3" },
-            holdPrimary: true, ownsOtherInstances: false, axes: true);
+            holdPrimary: true, axes: true);
 
         public const string AxesPrimaryAnimation = "dualaxes";
         public const string AxesSecondaryAnimation = "dualaxes_secondary";
@@ -102,6 +94,16 @@ namespace AnimCancel.Core
             AttackKind.AxesCombo => Axes,
             _ => null,
         };
+
+        /// <summary>
+        /// The fired clip is <paramref name="expected"/>. Spaces and underscores count as the same character: the
+        /// review log writes clip names with spaces as underscores (DebugLine.Token), and the axes clip names were
+        /// taken from the log (in-game pass axes2: the run never started on the raw names).
+        /// </summary>
+        public static bool SameClip(string? fired, string expected)
+            => !string.IsNullOrEmpty(fired)
+               && fired!.Length == expected.Length
+               && string.Equals(fired.Replace(' ', '_'), expected.Replace(' ', '_'), System.StringComparison.Ordinal);
 
         /// <summary>This weapon's Max combo (auto) switch (Enabled is checked separately).</summary>
         public bool IsOn(CancelSettings s) => _axes ? s.AxesMaxCombo : s.MaxCombo;

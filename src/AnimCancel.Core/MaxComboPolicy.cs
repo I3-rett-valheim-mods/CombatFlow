@@ -104,19 +104,53 @@ namespace AnimCancel.Core
             => s.Enabled && profile.IsOn(s) && kind == profile.Kind && eligible;
 
         /// <summary>
-        /// OnHit owns this hit: it routes, or a run is still running and the hit is a sword secondary
-        /// (a primary or any other attack never belongs to the run).
+        /// OnHit owns this hit only when the run acted on it (a chain trigger set, a non-last hit of the expected
+        /// swing, or the run's final cancel). Any other hit, absorbed or not, goes to the plain cancel policy, so a
+        /// swing is never left without its cancel.
         /// </summary>
-        public static bool Handles(AttackKind kind, bool routes, bool wasRunning)
-            => Handles(MaxComboProfile.Sword, kind, routes, wasRunning, sameInstance: false);
+        public static bool Acts(MaxComboActionKind k)
+            => k == MaxComboActionKind.TriggerSwing1 || k == MaxComboActionKind.TriggerSwing2
+               || k == MaxComboActionKind.CancelNow || k == MaxComboActionKind.Progress;
 
         /// <summary>
-        /// OnHit owns this hit: it routes, or a run of <paramref name="runProfile"/> was running and the hit is of
-        /// its kind, from the run's Attack (<paramref name="sameInstance"/>) unless the profile owns other instances.
+        /// Why Decide returned None for this hit (ev=maxcombo_skip): off|not_eligible|staggering|clip|not_last_hit,
+        /// "-" when it would act.
         /// </summary>
-        public static bool Handles(MaxComboProfile runProfile, AttackKind kind, bool routes, bool wasRunning,
-            bool sameInstance)
-            => routes || (wasRunning && kind == runProfile.Kind && (runProfile.OwnsOtherInstances || sameInstance));
+        public static string SkipReason(MaxComboProfile profile, MaxComboState state, string? firedClip, int swingHit,
+            CancelSettings s, bool eligible, bool staggering)
+        {
+            if (state.Running)
+            {
+                string expected = state.Step == 1 ? profile.Swing1Clip : profile.Swing2Clip;
+                return MaxComboProfile.SameClip(firedClip, expected) ? "-" : "clip";
+            }
+
+            if (!(s.Enabled && profile.IsOn(s))) return "off";
+            if (!eligible) return "not_eligible";
+            if (staggering) return "staggering";
+            if (!MaxComboProfile.SameClip(firedClip, profile.StartClip)) return "clip";
+            if (swingHit < profile.StartHits) return "not_last_hit";
+            return "-";
+        }
+
+        /// <summary>ev=maxcombo_skip keys (clipSpaces: spaces in the raw clip name, which the log shows as underscores).</summary>
+        public static (string k, string v)[] SkipFields(string reason, string? clip, int swingHit, int step)
+        {
+            int spaces = 0;
+            foreach (char c in clip ?? "")
+            {
+                if (c == ' ') spaces++;
+            }
+
+            return new[]
+            {
+                ("reason", reason),
+                ("clip", string.IsNullOrEmpty(clip) ? "-" : clip!),
+                ("clipSpaces", spaces.ToString(CultureInfo.InvariantCulture)),
+                ("hit", swingHit.ToString(CultureInfo.InvariantCulture)),
+                ("step", step.ToString(CultureInfo.InvariantCulture)),
+            };
+        }
 
         /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).
         /// <paramref name="held"/>: the secondary button is held (Loop mode only).</summary>
@@ -145,7 +179,7 @@ namespace AnimCancel.Core
                 }
 
                 bool loop = s.MaxComboMode == MaxComboMode.Loop;
-                if (state.Step == 1 && firedClip == profile.Swing1Clip)
+                if (state.Step == 1 && MaxComboProfile.SameClip(firedClip, profile.Swing1Clip))
                 {
                     if (swingHit < profile.Swing1Hits)
                     {
@@ -157,7 +191,7 @@ namespace AnimCancel.Core
                         : MaxComboAction.TriggerSwing2;
                 }
 
-                if (state.Step == 2 && firedClip == profile.Swing2Clip)
+                if (state.Step == 2 && MaxComboProfile.SameClip(firedClip, profile.Swing2Clip))
                 {
                     if (swingHit < profile.Swing2Hits)
                     {
@@ -170,7 +204,7 @@ namespace AnimCancel.Core
                 return MaxComboAction.None;
             }
 
-            if (!on || !eligible || staggering || firedClip != profile.StartClip || swingHit < profile.StartHits)
+            if (!on || !eligible || staggering || !MaxComboProfile.SameClip(firedClip, profile.StartClip) || swingHit < profile.StartHits)
             {
                 return MaxComboAction.None;
             }

@@ -27,14 +27,20 @@ internal static class MaxComboRun
     private static bool _tickReported;
 
     /// <summary>
-    /// At a damage event of the local player. True when max combo handles the hit, replacing the
-    /// plain cancel policy; <paramref name="cancelNow"/> then says whether to cancel (step 3).
-    /// False on any failure, so the plain policy runs.
+    /// At a damage event of the local player. True only when max combo acted on the hit (a chain trigger set,
+    /// a non-last hit of the expected swing, or the final cancel), replacing the plain cancel policy;
+    /// <paramref name="cancelNow"/> then says whether to cancel (step 3). False otherwise and on any failure,
+    /// so the plain policy runs and no swing is left without its cancel. A routed or running hit that does
+    /// nothing writes ev=maxcombo_skip.
     /// </summary>
+    /// <param name="swingHit">The hit's number within the swing (per Attack instance and clip) when the run
+    /// counted it, else 0: the plain policy then counts the swing's hits instead of the instance's, so a
+    /// chained or post-abort swing still gets its cancel at its own last hit.</param>
     internal static bool OnHit(Player p, Attack atk, AttackKind kind, CancelSettings s, string clip, bool clipIsNext,
-        out bool cancelNow)
+        out bool cancelNow, out int swingHit)
     {
         cancelNow = false;
+        swingHit = 0;
         MaxComboProfile? hitProfile = MaxComboProfile.For(kind);
         if (!_state.Running && (hitProfile == null || !hitProfile.IsOn(s)))
         {
@@ -44,6 +50,7 @@ internal static class MaxComboRun
         bool wasRunning = _state.Running;
         MaxComboProfile runProfile = wasRunning ? _profile : hitProfile!;
         bool sameInstance = ReferenceEquals(atk, _attack);
+        int stepBefore = _state.Step;
         try
         {
             bool eligible = hitProfile != null && Eligible(hitProfile, p, atk);
@@ -56,7 +63,7 @@ internal static class MaxComboRun
             float now = Time.time;
             bool staggering = p.IsStaggering();
             int id = RuntimeHelpers.GetHashCode(atk);
-            int swingHit = SwingHits.Register(id, clip);
+            swingHit = SwingHits.Register(id, clip);
             MaxComboProfile profile = runProfile;
             MaxComboAction a = MaxComboPolicy.Decide(profile, _state, clip, swingHit, sameInstance, s,
                 now - _state.StepTime, eligible, staggering, Held(profile, p));
@@ -73,7 +80,6 @@ internal static class MaxComboRun
                 }
             }
 
-            bool handles = MaxComboPolicy.Handles(runProfile, kind, routes, wasRunning, sameInstance);
             switch (a.Kind)
             {
                 case MaxComboActionKind.TriggerSwing1:
@@ -82,7 +88,8 @@ internal static class MaxComboRun
                     string? plan = Canceller.Chain(p, trigger, clipIsNext, profile.SwingTriggers);
                     if (plan == null)
                     {
-                        return handles;
+                        LogSkip(profile, "no_animator", clip, swingHit, stepBefore);
+                        return false;
                     }
 
                     _attack = atk;
@@ -111,10 +118,14 @@ internal static class MaxComboRun
 
                     cancelNow = true;
                     break;
+                default:
+                    // Nothing to do (or the run aborted and no new one starts): the plain policy decides.
+                    LogSkip(profile, MaxComboPolicy.SkipReason(profile, _state, clip, swingHit, s, eligible, staggering),
+                        clip, swingHit, _state.Step);
+                    break;
             }
 
-            // A hit of a run that just aborted (option turned off) is still ours: no plain cancel.
-            return handles;
+            return MaxComboPolicy.Acts(a.Kind);
         }
         catch (Exception e)
         {
@@ -127,6 +138,7 @@ internal static class MaxComboRun
             // Do not leave a run (and its chain triggers) behind a failure.
             SafeAbort(p, "error");
             cancelNow = false;
+            swingHit = 0;
             return false;
         }
     }
@@ -237,6 +249,16 @@ internal static class MaxComboRun
         if (reason == "instance" && ReviewLog.On)
         {
             AttackClearLog.OnInstanceAbort(p);
+        }
+    }
+
+    /// <summary>A routed or running hit the run did not act on (Debug log only).</summary>
+    private static void LogSkip(MaxComboProfile profile, string reason, string clip, int swingHit, int step)
+    {
+        if (ReviewLog.On)
+        {
+            ReviewLog.Write("maxcombo_skip", Concat(MaxComboPolicy.SkipFields(reason, clip, swingHit, step),
+                MaxComboPolicy.WeaponFields(profile)));
         }
     }
 

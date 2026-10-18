@@ -70,9 +70,12 @@ internal static class AttackTracker
         // Max combo (option on, sword secondary or berserker axes finisher) replaces the plain policy:
         // steps 1-2 never cancel, step 3 does.
         bool clipIsNext = clipPick == ClipPick.LogValue(ClipPickResult.Next);
-        CancelDecision d = MaxComboRun.OnHit(player, atk, kind, s, clip, clipIsNext, out bool maxComboCancel)
+        // Any hit max combo does not act on gets the plain policy, counted per swing when the run counted it.
+        CancelDecision d = MaxComboRun.OnHit(player, atk, kind, s, clip, clipIsNext, out bool maxComboCancel,
+            out int swingHit)
             ? new CancelDecision(maxComboCancel, maxComboCancel ? "ok" : "maxcombo")
-            : CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, seen, stateSpeed, s);
+            : CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, swingHit > 0 ? swingHit : seen,
+                stateSpeed, s);
         if (s.DelayAfterHit <= 0f)
         {
             // The delayed path checks the stagger at its due time instead.
