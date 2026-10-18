@@ -92,7 +92,7 @@ server-side. The mod appears in the plugin list like any other.
 ## Compatibility
 
 It patches these game methods, so other mods that patch the same ones may conflict:
-`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Player.OnDodgeMortal`,
+`Humanoid.OnAttackTrigger`, `Humanoid.StartAttack`, `Humanoid.UnequipItem`, `Player.OnDodgeMortal`,
 `Player.SetControls` and `CharacterAnimEvent.Speed`.
 
 ## Reporting a bug

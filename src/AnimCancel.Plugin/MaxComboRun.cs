@@ -201,6 +201,11 @@ internal static class MaxComboRun
             ReviewLog.Write("maxcombo_abort", Concat(MaxComboPolicy.AbortFields(reason),
                 MaxComboPolicy.RunFields(loop, null, p.GetStamina())));
         }
+
+        if (reason == "instance" && ReviewLog.On)
+        {
+            AttackClearLog.OnInstanceAbort(p);
+        }
     }
 
     private static void LogStep(Player p, MaxComboActionKind k, string clip, int id, int loop, string? plan)

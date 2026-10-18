@@ -584,4 +584,60 @@ public class GameApiGuardTests
 
         Assert.Equal("secondaryAttack", method.Parameters[1].Name);
     }
+
+    // ----- ev=attack_cleared (diagnosis only) -----
+
+    [Fact]
+    public void Humanoid_UnequipItem_is_a_public_non_virtual_void_taking_ItemData_and_bool()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method("Humanoid", "UnequipItem", "ItemData", "Boolean");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.False(method.IsVirtual, "A Player override would bypass the Humanoid patch.");
+        Assert.Equal("System.Void", method.ReturnType.FullName);
+        Assert.Equal("item", method.Parameters[0].Name);
+    }
+
+    [Theory]
+    [InlineData("Attack", "GetAttackStamina", "System.Single")]
+    [InlineData("Attack", "Clone", "Attack")]
+    [InlineData("Attack", "GetWeapon", "ItemDrop/ItemData")]
+    [InlineData("Player", "GetStamina", "System.Single")]
+    [InlineData("Player", "InDodge", "System.Boolean")]
+    [InlineData("Player", "CanMove", "System.Boolean")]
+    [InlineData("Player", "InMinorAction", "System.Boolean")]
+    public void Attack_cleared_getter_is_parameterless_instance(string typeName, string methodName, string returnType)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        MethodDefinition method = GameAssembly.Method(typeName, methodName);
+
+        Assert.False(method.IsStatic);
+        Assert.Equal(returnType, method.ReturnType.FullName);
+    }
+
+    [Theory]
+    [InlineData("m_character", "Humanoid")]
+    [InlineData("m_weapon", "ItemDrop/ItemData")]
+    public void Attack_probe_field_exists(string fieldName, string fieldType)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        FieldDefinition field = GameAssembly.Field("Attack", fieldName);
+
+        Assert.False(field.IsStatic);
+        Assert.Equal(fieldType, field.FieldType.FullName);
+    }
 }
