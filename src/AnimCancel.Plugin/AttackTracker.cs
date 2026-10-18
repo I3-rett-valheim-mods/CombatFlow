@@ -95,7 +95,7 @@ internal static class AttackTracker
         }
     }
 
-    /// <summary>Called every frame from Plugin.Update: fires a delayed cancel when due.</summary>
+    /// <summary>Called every frame from Plugin.Update: recovery after a cancel, and a delayed cancel when due.</summary>
     internal static void Tick()
     {
         try
@@ -122,9 +122,11 @@ internal static class AttackTracker
             // would report a stale dtSinceCancel and a stale delayed cancel could fire.
             _pendingPlayer = null;
             _pendingAttack = null;
-            Canceller.InFlight = false;
+            Canceller.Reset();
             return;
         }
+
+        Canceller.TickRecovery();
 
         if (_pendingAttack == null || Time.time < _pendingDue)
         {

@@ -26,6 +26,8 @@ public class GameApiGuardTests
     [InlineData("CharacterAnimEvent", "m_pauseSpeed", "System.Single")]
     [InlineData("Character", "m_attackHold", "System.Boolean")]
     [InlineData("Character", "m_secondaryAttackHold", "System.Boolean")]
+    [InlineData("CharacterAnimEvent", "m_character", "Character")]
+    [InlineData("CharacterAnimEvent", "m_animator", "UnityEngine.Animator")]
     public void Instance_field_exists_with_expected_type(string typeName, string fieldName, string fieldType)
     {
         if (!GameAssembly.IsAvailable)
@@ -265,5 +267,22 @@ public class GameApiGuardTests
 
         Assert.True(field.IsPublic);
         Assert.True(field.IsStatic);
+    }
+
+    [Fact]
+    public void CharacterAnimEvent_Speed_is_a_public_void_taking_one_float()
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // The Speed animation event the prefix skips; it only writes m_animator.speed.
+        MethodDefinition method = GameAssembly.Method("CharacterAnimEvent", "Speed", "Single");
+
+        Assert.True(method.IsPublic);
+        Assert.False(method.IsStatic);
+        Assert.Equal("System.Void", method.ReturnType.FullName);
+        Assert.Equal("speedScale", method.Parameters[0].Name);
     }
 }
