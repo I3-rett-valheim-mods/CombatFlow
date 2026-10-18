@@ -39,6 +39,15 @@ internal static class Canceller
     /// </summary>
     private static string? _emoteTrigger;
 
+    /// <summary>
+    /// The relaunch was consumed for the current cancel: further StartAttack calls of the
+    /// local player are duplicates until the relaunched attack begins (RelaunchBlock).
+    /// </summary>
+    private static bool _blockActive;
+
+    /// <summary>StartAttack calls refused by the current block.</summary>
+    private static int _blocked;
+
     /// <param name="stateTag">Tag of the state being cancelled (default "attack"; a dodge passes its own).</param>
     /// <param name="kindOverride">Log kind when there is no current attack (dodge).</param>
     public static void Cancel(Player p, CancelEmote e, int? stateTag = null, string? kindOverride = null)
@@ -59,6 +68,7 @@ internal static class Canceller
             ? animator.GetNextAnimatorStateInfo(0).fullPathHash
             : animator.GetCurrentAnimatorStateInfo(0).fullPathHash;
         Relaunched = false;
+        LiftBlock("cancel");
 
         // A previous emote_stop can stay latched when a dodge/attack wins via Any State in the
         // same frame; it would then cut this emote on entry.
@@ -106,6 +116,8 @@ internal static class Canceller
         InFlight = false;
         _fullyInEmoteSince = -1f;
         dtSinceCancel = Time.time - LastCancelTime;
+        _blockActive = true;
+        _blocked = 0;
         // Do not let an unconsumed emote_stop or emote trigger wait for the next transition.
         Player? p = Player.m_localPlayer;
         if (p != null && p.m_animator != null)
@@ -123,6 +135,7 @@ internal static class Canceller
     /// </summary>
     internal static void Disable()
     {
+        LiftBlock("disabled");
         if (!InFlight && !CancelledState.HasValue && _emoteTrigger == null)
         {
             return;
@@ -159,6 +172,87 @@ internal static class Canceller
         Relaunched = false;
         _fullyInEmoteSince = -1f;
         _emoteTrigger = null;
+        _blockActive = false;
+        _blocked = 0;
+    }
+
+    /// <summary>
+    /// Harmony prefix on Humanoid.StartAttack: true when this call is a duplicate of the
+    /// relaunch, during the blend into the emote, and must be refused. Lifts the block once
+    /// the relaunched attack has begun or the window is over. Nothing when no block is active.
+    /// </summary>
+    internal static bool RefuseStartAttack(Humanoid h)
+    {
+        if (!_blockActive)
+        {
+            return false;
+        }
+
+        Player? p = Player.m_localPlayer;
+        if (p == null || p.m_animator == null)
+        {
+            LiftBlock("no_player");
+            return false;
+        }
+
+        bool begun = RelaunchedAttackBegun(p.m_animator);
+        float since = Time.time - LastCancelTime;
+        if (RelaunchBlock.ShouldLift(_blockActive, since, begun))
+        {
+            LiftBlock(begun ? "attack" : "window");
+            return false;
+        }
+
+        if (!RelaunchBlock.ShouldRefuse(h == p, _blockActive, since, begun))
+        {
+            return false;
+        }
+
+        _blocked++;
+        return true;
+    }
+
+    /// <summary>Every frame: lifts the block without waiting for another StartAttack call.</summary>
+    private static void TickBlock(Player p)
+    {
+        if (!_blockActive || p.m_animator == null)
+        {
+            return;
+        }
+
+        bool begun = RelaunchedAttackBegun(p.m_animator);
+        if (RelaunchBlock.ShouldLift(_blockActive, Time.time - LastCancelTime, begun))
+        {
+            LiftBlock(begun ? "attack" : "window");
+        }
+    }
+
+    private static bool RelaunchedAttackBegun(Animator animator)
+    {
+        bool inTransition = animator.IsInTransition(0);
+        AnimatorStateInfo current = animator.GetCurrentAnimatorStateInfo(0);
+        bool nextIsAttack = inTransition && animator.GetNextAnimatorStateInfo(0).tagHash == TagAttack;
+        bool currentIsCancelled = CancelledState.HasValue && current.fullPathHash == CancelledState.Value;
+        return RelaunchBlock.AttackBegun(inTransition, current.tagHash == TagAttack, nextIsAttack, currentIsCancelled);
+    }
+
+    /// <summary>Ends the block, with one relaunch_block line per cancel that relaunched.</summary>
+    private static void LiftBlock(string reason)
+    {
+        if (!_blockActive)
+        {
+            return;
+        }
+
+        _blockActive = false;
+        if (ReviewLog.On)
+        {
+            ReviewLog.Write("relaunch_block",
+                ("blocked", _blocked.ToString()), ("reason", reason),
+                ("dtSinceCancel", DebugLine.Num(Time.time - LastCancelTime)));
+        }
+
+        _blocked = 0;
     }
 
     /// <summary>
@@ -169,7 +263,7 @@ internal static class Canceller
     /// </summary>
     internal static void TickRecovery()
     {
-        if (!InFlight && !CancelledState.HasValue)
+        if (!InFlight && !CancelledState.HasValue && !_blockActive)
         {
             return;
         }
@@ -180,6 +274,8 @@ internal static class Canceller
             Reset();
             return;
         }
+
+        TickBlock(p);
 
         Animator animator = p.m_animator;
         bool inTransition = animator.IsInTransition(0);
