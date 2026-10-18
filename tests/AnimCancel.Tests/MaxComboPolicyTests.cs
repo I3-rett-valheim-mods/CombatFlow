@@ -12,7 +12,8 @@ namespace AnimCancel.Tests
         const string A2 = "Attack2";
         const string A3 = "Attack3";
 
-        static readonly CancelSettings On = CancelSettings.Default with { MaxCombo = true };
+        static readonly CancelSettings Base = CancelSettings.Default with { MaxCombo = false, MaxComboMode = MaxComboMode.Cycle, MaxComboLoopCap = 40 };
+        static readonly CancelSettings On = Base with { MaxCombo = true };
         static readonly MaxComboState Idle = MaxComboState.Idle;
 
         static MaxComboAction Hit(MaxComboState st, string? clip, CancelSettings? s = null, bool same = true,
@@ -69,7 +70,7 @@ namespace AnimCancel.Tests
         [Fact]
         public void Option_off_does_nothing()
         {
-            Is(Hit(Idle, R4, CancelSettings.Default), MaxComboActionKind.None);
+            Is(Hit(Idle, R4, Base), MaxComboActionKind.None);
             Is(Hit(Idle, R4, On with { Enabled = false }), MaxComboActionKind.None);
         }
 
@@ -101,7 +102,7 @@ namespace AnimCancel.Tests
         public void Running_aborts_at_a_hit()
         {
             var s1 = new MaxComboState(1, 7, 0f);
-            Is(Hit(s1, A2, CancelSettings.Default), MaxComboActionKind.Abort, "disabled");
+            Is(Hit(s1, A2, Base), MaxComboActionKind.Abort, "disabled");
             Is(Hit(s1, A2, On with { Enabled = false }), MaxComboActionKind.Abort, "disabled");
             Is(Hit(s1, A2, same: false), MaxComboActionKind.Abort, "instance");
             Is(Hit(s1, A2, staggering: true), MaxComboActionKind.Abort, "stagger");
@@ -117,7 +118,7 @@ namespace AnimCancel.Tests
                 => MaxComboPolicy.Watch(s, same, set ?? On, since, stag, dodge);
 
             Is(W(), MaxComboActionKind.None);
-            Is(W(CancelSettings.Default), MaxComboActionKind.Abort, "disabled");
+            Is(W(Base), MaxComboActionKind.Abort, "disabled");
             Is(W(On with { Enabled = false }), MaxComboActionKind.Abort, "disabled");
             Is(W(same: false), MaxComboActionKind.Abort, "instance");
             Is(W(stag: true), MaxComboActionKind.Abort, "stagger");
@@ -127,7 +128,7 @@ namespace AnimCancel.Tests
 
         [Fact]
         public void Watch_is_quiet_when_idle()
-            => Is(MaxComboPolicy.Watch(Idle, false, CancelSettings.Default, 99f, true, true), MaxComboActionKind.None);
+            => Is(MaxComboPolicy.Watch(Idle, false, Base, 99f, true, true), MaxComboActionKind.None);
 
         [Fact]
         public void Abort_and_none_transitions()
@@ -160,7 +161,7 @@ namespace AnimCancel.Tests
         [Fact]
         public void Max_combo_off_keeps_the_plain_sword_secondary_cancel()
         {
-            CancelSettings off = CancelSettings.Default;
+            CancelSettings off = Base;
             Assert.False(off.MaxCombo);
             Assert.False(MaxComboPolicy.Routes(AttackKind.SwordSecondary, off, eligible: true));
 
@@ -186,7 +187,7 @@ namespace AnimCancel.Tests
         {
             Assert.Equal(
                 new[] { ("enabled", "true"), ("maxCombo", "false"), ("maxComboMode", "Cycle"), ("swordCombo", "true"), ("swordSecondary", "true"), ("maxComboLoopCap", "40") },
-                MaxComboPolicy.ConfigFields(CancelSettings.Default));
+                MaxComboPolicy.ConfigFields(Base));
             Assert.Equal(
                 new[] { ("enabled", "false"), ("maxCombo", "true"), ("maxComboMode", "Cycle"), ("swordCombo", "false"), ("swordSecondary", "false"), ("maxComboLoopCap", "40") },
                 MaxComboPolicy.ConfigFields(On with { Enabled = false, SwordCombo = false, SwordSecondary = false }));

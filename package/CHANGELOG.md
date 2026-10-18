@@ -5,11 +5,11 @@
 - First release.
 - **Sword.** Cuts the recovery after each blow of the primary combo and after the
   secondary attack, right after the hit lands. Hold attack to chain.
-- **Sword, Max combo (auto).** Optional, off by default: after the secondary attack lands,
+- **Sword, Max combo (auto).** On by default: after the secondary attack lands,
   plays the second and third swings of the primary combo into it, then cancels.
-  `Max combo mode`: `Cycle` (default) or `Loop` (keeps alternating the second and third
-  swings while the secondary button is held; only the first secondary costs stamina).
-  `Max combo loop cap` (default 40, 0 for no cap) sets how many extra swings Loop chains
+  `Max combo mode`: `Loop` (default; keeps alternating the second and third
+  swings while the secondary button is held; only the first secondary costs stamina) or `Cycle`.
+  `Max combo loop cap` (default 0 = no cap; 1 to 1000 to limit) sets how many extra swings Loop chains
   before it cancels.
   Works with Cancel secondary off and honours Delay after hit.
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the

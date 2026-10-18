@@ -49,7 +49,7 @@ internal static class Settings
         _swordSecondary = config.Bind("Sword", "Cancel secondary", d.SwordSecondary,
             Describe("Cut the recovery after the sword secondary attack.", 90));
         _maxCombo = config.Bind("Sword", "Max combo (auto)", d.MaxCombo,
-            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Works even with Cancel secondary off. The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. Off by default.", 85));
+            Describe("While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop (see Max combo mode). Works even with Cancel secondary off. The final cancel honours Delay after hit. Releasing the button takes effect at the next hit, so one more swing may play. Needs a sword whose primary is the three-swing combo. On by default.", 85));
         _maxComboMode = config.Bind("Sword", "Max combo mode", d.MaxComboMode,
             Describe("Used when Max combo (auto) is on. Cycle: secondary, second swing, third swing, then cancel (every relaunched secondary costs stamina). Loop: after the third swing, keep alternating the second and third swings while the secondary button is held; only the first secondary costs stamina. Releasing the button cancels at the next hit (one more swing may play). After Max combo loop cap extra swings a still-held button starts a new secondary, which costs stamina again.", 84));
         _maxComboLoopCap = config.Bind("Sword", "Max combo loop cap", d.MaxComboLoopCap,

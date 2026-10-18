@@ -57,7 +57,7 @@ namespace AnimCancel.Core
 
         /// <summary>Loop mode: default of Max combo loop cap, the swings chained past the first pass before
         /// the run ends with a cancel.</summary>
-        public const int DefaultLoopCap = 40;
+        public const int DefaultLoopCap = 0;
 
         /// <summary>Range of Max combo loop cap; 0 means no cap.</summary>
         public const int MinLoopCap = 0;

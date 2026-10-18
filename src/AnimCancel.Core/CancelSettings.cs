@@ -22,6 +22,7 @@ namespace AnimCancel.Core
         int MaxComboLoopCap = MaxComboPolicy.DefaultLoopCap)
     {
         public static CancelSettings Default { get; } = new CancelSettings(
-            true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false);
+            true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false,
+            MaxCombo: true, MaxComboMode: MaxComboMode.Loop, MaxComboLoopCap: 0);
     }
 }

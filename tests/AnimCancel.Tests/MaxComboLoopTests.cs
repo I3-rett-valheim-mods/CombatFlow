@@ -10,8 +10,8 @@ namespace AnimCancel.Tests
         const string A2 = "Attack2";
         const string A3 = "Attack3";
 
-        static readonly CancelSettings Loop = CancelSettings.Default with { MaxCombo = true, MaxComboMode = MaxComboMode.Loop };
-        static readonly CancelSettings Cycle = CancelSettings.Default with { MaxCombo = true };
+        static readonly CancelSettings Loop = CancelSettings.Default with { MaxCombo = true, MaxComboMode = MaxComboMode.Loop, MaxComboLoopCap = 40 };
+        static readonly CancelSettings Cycle = CancelSettings.Default with { MaxCombo = true, MaxComboMode = MaxComboMode.Cycle, MaxComboLoopCap = 40 };
 
         static MaxComboAction Hit(MaxComboState st, string? clip, bool held, CancelSettings? s = null, bool same = true,
             float since = 0.3f, bool staggering = false)
@@ -24,11 +24,12 @@ namespace AnimCancel.Tests
         }
 
         [Fact]
-        public void Mode_defaults_to_cycle()
+        public void Mode_defaults_to_loop_without_cap()
         {
-            Assert.Equal(MaxComboMode.Cycle, CancelSettings.Default.MaxComboMode);
-            Assert.Equal(40, MaxComboPolicy.DefaultLoopCap);
-            Assert.Equal(40, CancelSettings.Default.MaxComboLoopCap);
+            Assert.True(CancelSettings.Default.MaxCombo);
+            Assert.Equal(MaxComboMode.Loop, CancelSettings.Default.MaxComboMode);
+            Assert.Equal(0, MaxComboPolicy.DefaultLoopCap);
+            Assert.Equal(0, CancelSettings.Default.MaxComboLoopCap);
         }
 
         [Fact]
@@ -183,8 +184,9 @@ namespace AnimCancel.Tests
         [Fact]
         public void Config_fields_carry_the_mode()
         {
-            Assert.Contains(("maxComboMode", "Cycle"), MaxComboPolicy.ConfigFields(CancelSettings.Default));
+            Assert.Contains(("maxComboMode", "Cycle"), MaxComboPolicy.ConfigFields(Cycle));
             Assert.Contains(("maxComboMode", "Loop"), MaxComboPolicy.ConfigFields(Loop));
+            Assert.Contains(("maxComboMode", "Loop"), MaxComboPolicy.ConfigFields(CancelSettings.Default));
         }
 
         [Fact]
