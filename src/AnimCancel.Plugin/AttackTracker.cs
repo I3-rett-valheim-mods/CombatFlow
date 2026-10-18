@@ -63,7 +63,8 @@ internal static class AttackTracker
         }
 
         int seen = Counter.Register(atk);
-        ClipTiming timing = ClipTimingCache.ForCurrent(player.m_animator, out float stateSpeed, out string clip, out float clipT)
+        ClipTiming timing = ClipTimingCache.ForCurrent(player.m_animator, out float stateSpeed, out string clip, out float clipT,
+                                out string clipPick)
                             ?? NoTiming;
         int lvl = atk.m_currentAttackCainLevel;
         CancelDecision d = CancelPolicy.ShouldCancel(kind, lvl, atk.m_attackChainLevels, timing, seen, stateSpeed, s);
@@ -78,7 +79,7 @@ internal static class AttackTracker
             ReviewLog.Write("damage",
                 ("kind", kind.ToString()), ("lvl", lvl.ToString()),
                 ("n", $"{seen}/{timing.DamageEventTimes.Count}"), ("clipT", DebugLine.Num(clipT)),
-                ("clip", clip), ("stateSpeed", DebugLine.Num(stateSpeed)));
+                ("clip", clip), ("stateSpeed", DebugLine.Num(stateSpeed)), ("clipPick", clipPick));
             LogDecision(kind, lvl, d.Cancel, d.Reason);
         }
 

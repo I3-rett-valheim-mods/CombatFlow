@@ -61,7 +61,7 @@ internal static class Canceller
         float speedBefore = animator.speed;
         float pauseTimer = p.m_animEvent != null ? p.m_animEvent.m_pauseTimer : 0f;
 
-        // Same rule as ClipTimingCache: the next state when blending into the cancelled state.
+        // The next state when blending into the cancelled state (tag match), otherwise the current one.
         bool useNext = animator.IsInTransition(0)
                        && animator.GetNextAnimatorStateInfo(0).tagHash == (stateTag ?? TagAttack);
         CancelledState = useNext
