@@ -8,11 +8,14 @@
 - **Sword, Max combo (auto).** Optional, off by default: after the secondary attack lands,
   plays the second and third swings of the primary combo into it, then cancels.
   `Max combo mode`: `Cycle` (default) or `Loop` (keeps alternating the second and third
-  swings while the secondary button is held).
+  swings while the secondary button is held; only the first secondary costs stamina).
+  Works with Cancel secondary off and honours Delay after hit.
 - **Berserker axes.** Cuts the recovery after the combo blows (the last one, or the
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
   faster than the game's own chain point.
 - **Dodge roll.** Ends the roll as soon as its invincibility window is over.
+- **Combo lab log.** Advanced option, off by default: a measurement log of inputs, attack
+  starts, animator states and hits, for bug reports.
 - **F8 toggle** with an on-screen message, and a master switch in the config.
 - Configuration through BepInEx ConfigurationManager, including the emote used under the
   hood, a delay after the hit, and a debug log for measuring damage output.

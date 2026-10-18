@@ -67,7 +67,7 @@ internal static class MaxComboRun
                     string? plan = Canceller.Chain(p, trigger, clipIsNext, MaxComboPolicy.SwingTriggers);
                     if (plan == null)
                     {
-                        return routes || wasRunning;
+                        return MaxComboPolicy.Handles(kind, routes, wasRunning);
                     }
 
                     _attack = atk;
@@ -94,7 +94,7 @@ internal static class MaxComboRun
             }
 
             // A hit of a run that just aborted (option turned off) is still ours: no plain cancel.
-            return routes || wasRunning;
+            return MaxComboPolicy.Handles(kind, routes, wasRunning);
         }
         catch (Exception e)
         {

@@ -153,7 +153,7 @@ internal static class Canceller
         InFlight = false;
         _fullyInEmoteSince = -1f;
         dtSinceCancel = Time.time - LastCancelTime;
-        _blockActive = true;
+        _blockActive = RelaunchBlock.ShouldStart(dtSinceCancel);
         _blocked = 0;
         // Do not let an unconsumed emote_stop or emote trigger wait for the next transition.
         Player? p = Player.m_localPlayer;

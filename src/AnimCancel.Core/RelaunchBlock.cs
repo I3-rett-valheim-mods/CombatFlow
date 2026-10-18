@@ -14,11 +14,17 @@ namespace AnimCancel.Core
     {
         public const float Window = 0.5f;
 
+        /// <summary>A relaunch consumed this long after the cancel still needs the block (a later one has nothing to block).</summary>
+        public static bool ShouldStart(float dtSinceCancel) => dtSinceCancel >= 0f && dtSinceCancel < Window;
+
         /// <summary>
         /// The relaunched attack has begun on layer 0: its next-or-current state (the rule
         /// Player.InAttack() uses) is tagged "attack", but not the cancelled attack still current
         /// before the blend into the emote has started. During that blend the current state is
         /// still the cancelled attack and next is the emote, which InAttack() reads as "not in attack".
+        /// The cancelled state is excluded only while it is the current state with no transition into
+        /// an attack: once the blend leads into an attack (next), that attack is the relaunch, even
+        /// when the sword secondary relaunches into the very state it was cancelled in.
         /// </summary>
         public static bool AttackBegun(bool inTransition, bool currentIsAttack, bool nextIsAttack, bool currentIsCancelled)
             => inTransition ? nextIsAttack : currentIsAttack && !currentIsCancelled;

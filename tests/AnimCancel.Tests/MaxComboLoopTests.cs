@@ -158,5 +158,14 @@ namespace AnimCancel.Tests
             Assert.Contains(("maxComboMode", "Cycle"), MaxComboPolicy.ConfigFields(CancelSettings.Default));
             Assert.Contains(("maxComboMode", "Loop"), MaxComboPolicy.ConfigFields(Loop));
         }
+
+        [Fact]
+        public void A_running_run_only_owns_secondary_hits()
+        {
+            Assert.True(MaxComboPolicy.Handles(AttackKind.SwordSecondary, routes: false, wasRunning: true));
+            Assert.False(MaxComboPolicy.Handles(AttackKind.SwordCombo, routes: false, wasRunning: true));
+            Assert.False(MaxComboPolicy.Handles(AttackKind.SwordSecondary, routes: false, wasRunning: false));
+            Assert.True(MaxComboPolicy.Handles(AttackKind.SwordSecondary, routes: true, wasRunning: false));
+        }
     }
 }

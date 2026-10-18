@@ -52,8 +52,8 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | General | Toggle key | F8 | Turns cancelling on or off in game. |
 | Sword | Cancel primary combo | true | Cut the recovery after each primary blow. |
 | Sword | Cancel secondary | true | Cut the recovery after the secondary attack. |
-| Sword | Max combo (auto) | false | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. |
-| Sword | Max combo mode | Cycle | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held. |
+| Sword | Max combo (auto) | false | While the secondary attack plays, chain the second and third primary swings into it, then cancel or loop. Works with Cancel secondary off; the final cancel honours Delay after hit. |
+| Sword | Max combo mode | Cycle | Used with Max combo (auto). `Cycle`: cancel after the third swing. `Loop`: alternate the second and third swings while the secondary is held (only the first secondary costs stamina); releasing takes effect at the next hit. |
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
@@ -63,11 +63,23 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 
 ## How much faster
 
-Measured in game (solo, hitting a target, damage multipliers counted: finisher ×2, secondary ×3):
-sword combo about ×1.5 (1.6 → 2.5 base-damage hits per second), sword secondary about ×1.6
-(1.7 → 2.6). Stamina use per second rises by the same factor. To measure it yourself, turn on
-**Debug log**, switch the per-weapon cancel options off for a vanilla run, and compare the
-timestamps of the damage events.
+Measured in game on the dev profile (sword, solo, hitting a target; base-damage units per second,
+counting each swing's damage multiplier; factor against the vanilla secondary):
+
+| Setup | Units/s | vs vanilla secondary |
+|---|---|---|
+| Vanilla combo | 1.51 | x0.92 |
+| Vanilla secondary | 1.64 | x1.00 |
+| Cancel, combo | 2.46 | x1.50 |
+| Cancel, secondary | 2.68 | x1.63 |
+| Max combo, Cycle | 5.01 | x3.05 |
+| Max combo, Loop | 7.63 (peak 8.56) | x4.65 |
+
+Stamina: Cycle spends stamina on every relaunched secondary. Loop only charges the first
+secondary (the chain swings are part of it), so stamina stays flat while you hold the button.
+To measure it yourself, turn on **Debug log**, switch the per-weapon cancel options off for a
+vanilla run, and compare the timestamps of the damage events. **Combo lab log** (Advanced)
+writes much more detail, but it is a debugging aid for bug reports, not something to leave on.
 
 ## Multiplayer
 

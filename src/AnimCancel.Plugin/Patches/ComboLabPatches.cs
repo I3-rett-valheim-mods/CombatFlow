@@ -86,6 +86,7 @@ internal static class LabStartAttackPatch
         return true;
     }
 
+    [HarmonyPriority(Priority.Last)]
     private static void Postfix(Humanoid __instance, bool secondaryAttack, bool __result, Before __state)
     {
         try
@@ -199,6 +200,7 @@ internal static class LabSwingPatch
 [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.IsBlocking))]
 internal static class LabBlockingPatch
 {
+    [HarmonyPriority(Priority.Last)]
     private static void Postfix(Humanoid __instance, bool __result)
     {
         try

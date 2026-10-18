@@ -128,6 +128,8 @@ internal static class ComboLab
             return p.m_cachedAttack;
         }
 
+        // Player.InAttack: layer 0 through the cached next-or-current tag (the same Animator reads,
+        // done here without writing the cache), then layers 1.. with the same rule.
         Animator a = p.m_animator;
         for (int i = 0; i < a.layerCount; i++)
         {

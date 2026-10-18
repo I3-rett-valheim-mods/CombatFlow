@@ -86,6 +86,13 @@ namespace AnimCancel.Core
         public static bool Routes(AttackKind kind, CancelSettings s, bool eligible)
             => s.Enabled && s.MaxCombo && kind == AttackKind.SwordSecondary && eligible;
 
+        /// <summary>
+        /// OnHit owns this hit: it routes, or a run is still running and the hit is a sword secondary
+        /// (a primary or any other attack never belongs to the run).
+        /// </summary>
+        public static bool Handles(AttackKind kind, bool routes, bool wasRunning)
+            => routes || (wasRunning && kind == AttackKind.SwordSecondary);
+
         /// <summary>At a damage event. <paramref name="firedClip"/> is the clip that fired it (ClipPick).
         /// <paramref name="held"/>: the secondary button is held (Loop mode only).</summary>
         public static MaxComboAction Decide(MaxComboState state, string? firedClip, bool sameInstance,

@@ -77,5 +77,15 @@ namespace AnimCancel.Tests
             // Fully in the emote.
             Assert.False(RelaunchBlock.AttackBegun(inTransition: false, currentIsAttack: false, nextIsAttack: false, currentIsCancelled: false));
         }
+
+        [Fact]
+        public void Block_is_set_only_for_a_relaunch_inside_the_window()
+        {
+            Assert.True(RelaunchBlock.ShouldStart(0f));
+            Assert.True(RelaunchBlock.ShouldStart(RelaunchBlock.Window - 0.01f));
+            Assert.False(RelaunchBlock.ShouldStart(RelaunchBlock.Window));
+            Assert.False(RelaunchBlock.ShouldStart(2f));
+            Assert.False(RelaunchBlock.ShouldStart(-0.1f));
+        }
     }
 }

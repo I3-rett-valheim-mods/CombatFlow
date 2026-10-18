@@ -432,6 +432,22 @@ public class GameApiGuardTests
     }
 
     [Theory]
+    [InlineData("Humanoid")]
+    [InlineData("Player")]
+    public void HaveQueuedChain_writes_no_field(string type)
+    {
+        if (!GameAssembly.IsAvailable)
+        {
+            return;
+        }
+
+        // Combo lab calls Player.HaveQueuedChain from a prefix: it must stay a pure read.
+        MethodDefinition method = GameAssembly.Method(type, "HaveQueuedChain");
+
+        Assert.DoesNotContain(method.Body.Instructions, i => i.OpCode.Code is Mono.Cecil.Cil.Code.Stfld or Mono.Cecil.Cil.Code.Stsfld);
+    }
+
+    [Theory]
     [InlineData(1, "attack")]
     [InlineData(2, "attackHold")]
     [InlineData(3, "secondaryAttack")]
