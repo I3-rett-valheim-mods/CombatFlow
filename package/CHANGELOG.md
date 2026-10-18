@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1
+
+- Shorter Thunderstore page; full details stay in the README on GitHub. No gameplay change.
+
 ## 0.1.0
 
 - First release.

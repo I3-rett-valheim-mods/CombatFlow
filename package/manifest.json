@@ -1,7 +1,7 @@
 {
   "name": "CombatFlow",
   "author": "I3_rett",
-  "version_number": "0.1.0",
+  "version_number": "0.1.1",
   "website_url": "https://github.com/I3-rett-valheim-mods/CombatFlow",
   "description": "Client-side. Cuts sword, berserker-axe and dodge recovery right after the hit, like the emote cancel. Max combo (auto, on by default) and Auto perfect parry (off by default) change how the game counts attacks and blocks: check your server's rules.",
   "dependencies": [

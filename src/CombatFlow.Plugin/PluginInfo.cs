@@ -5,5 +5,5 @@ internal static class PluginInfo
 {
     public const string Guid = "I3_rett.CombatFlow";
     public const string Name = "CombatFlow";
-    public const string Version = "0.1.0";
+    public const string Version = "0.1.1";
 }

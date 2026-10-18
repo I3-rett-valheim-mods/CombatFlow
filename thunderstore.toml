@@ -9,7 +9,7 @@ schemaVersion = "0.0.1"
 [package]
 namespace = "I3_rett"
 name = "CombatFlow"
-versionNumber = "0.1.0"
+versionNumber = "0.1.1"
 description = "Client-side. Cuts sword, berserker-axe and dodge recovery right after the hit, like the emote cancel. Max combo (auto, on by default) and Auto perfect parry (off by default) change how the game counts attacks and blocks: check your server's rules."
 websiteUrl = "https://github.com/I3-rett-valheim-mods/CombatFlow"
 containsNsfwContent = false
