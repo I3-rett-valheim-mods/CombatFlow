@@ -26,6 +26,7 @@ internal static class Settings
     private static ConfigEntry<AxesComboMode> _axesCombo = null!;
     private static ConfigEntry<bool> _axesSecondary = null!;
     private static ConfigEntry<bool> _dodge = null!;
+    private static ConfigEntry<bool> _autoParry = null!;
     private static ConfigEntry<CancelEmote> _emote = null!;
     private static ConfigEntry<float> _delayAfterHit = null!;
     private static ConfigEntry<bool> _debugLog = null!;
@@ -68,6 +69,9 @@ internal static class Settings
 
         _dodge = config.Bind("Dodge", "Cancel after invincibility", d.Dodge,
             Describe("End the dodge roll as soon as its invincibility window is over.", 100));
+
+        _autoParry = config.Bind("Combat", "Auto perfect parry", d.AutoParry,
+            Describe("A blockable hit from the front is parried as a perfect block, even mid-attack and without the block button. Blocks with the shield, weapon or bare hands, as the game does; hits from behind and during a dodge are unchanged. The game's own block rules apply (stamina, guard break, attacker stagger). Applies to every attacker, creatures and players. Needs Enabled on. Off by default.", 100));
 
         _emote = config.Bind("Advanced", "Cancel emote", d.Emote,
             Describe("The emote the game plays under the hood to cut an animation short, NoNoNo or Cheer.", 100, advanced: true));
@@ -148,6 +152,7 @@ internal static class Settings
             _maxCombo.Value,
             _maxComboMode.Value,
             _maxComboLoopCap.Value,
-            _swapButtons.Value);
+            _swapButtons.Value,
+            _autoParry.Value);
     }
 }

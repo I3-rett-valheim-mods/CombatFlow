@@ -47,6 +47,12 @@ starts the secondary attack, so holding it runs the Max combo loop, and the seco
 plays the light combo. Only the two attack buttons change (keyboard, mouse and gamepad); other
 weapons, tools and build mode keep the game's layout, and the swap is off whenever the mod is.
 
+**Auto perfect parry** (Combat section, off by default): a blockable hit from the front is
+parried as a perfect block, even mid-attack and without the block button. It blocks with what the
+game blocks with (shield, weapon or bare hands); hits from behind and hits during a dodge are taken as usual. The rest is the
+game's own block: stamina cost, guard break when out of stamina, attacker stagger, skill and
+effects. It applies to every attacker, creatures and players alike, and is off whenever the mod is.
+
 ## Configuration
 
 Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManager.
@@ -64,6 +70,7 @@ Edit `BepInEx/config/I3_rett.AnimCancel.cfg`, or use BepInEx ConfigurationManage
 | Berserker axes | Combo blows to cancel | MiddleAndFinisher | `FinisherOnly` or `MiddleAndFinisher`. |
 | Berserker axes | Cancel secondary (Cleave) | false | Cut the recovery after Cleave. |
 | Dodge | Cancel after invincibility | true | End the roll once invincibility is over. |
+| Combat | Auto perfect parry | false | Parry a blockable hit from the front as a perfect block, even mid-attack and without the block button. Blocks with the shield, weapon or bare hands, as the game does; hits from behind and during a dodge are unchanged. Applies to all attackers. Needs Enabled on. |
 | Advanced | Cancel emote | NoNoNo | The emote played under the hood, `NoNoNo` or `Cheer`. |
 | Advanced | Delay after hit (s) | 0 | Seconds to wait after the hit before cancelling, 0 to 0.3. |
 | Advanced | Debug log | false | Log the time of every damage event and cancel. While it is off, the mod writes nothing to the log apart from its startup line and errors. |

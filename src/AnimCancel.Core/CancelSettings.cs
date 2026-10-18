@@ -20,10 +20,11 @@ namespace AnimCancel.Core
         bool MaxCombo = false,
         MaxComboMode MaxComboMode = MaxComboMode.Cycle,
         int MaxComboLoopCap = MaxComboPolicy.DefaultLoopCap,
-        bool SwapButtons = false)
+        bool SwapButtons = false,
+        bool AutoParry = false)
     {
         public static CancelSettings Default { get; } = new CancelSettings(
             true, true, true, AxesComboMode.MiddleAndFinisher, false, true, CancelEmote.NoNoNo, 0f, false,
-            MaxCombo: true, MaxComboMode: MaxComboMode.Loop, MaxComboLoopCap: 0, SwapButtons: false);
+            MaxCombo: true, MaxComboMode: MaxComboMode.Loop, MaxComboLoopCap: 0, SwapButtons: false, AutoParry: false);
     }
 }

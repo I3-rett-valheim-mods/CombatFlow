@@ -19,6 +19,10 @@
   middle ones as well) and, optionally, after Cleave. A blow is only cut when that is
   faster than the game's own chain point.
 - **Dodge roll.** Ends the roll as soon as its invincibility window is over.
+- **Auto perfect parry.** Off by default (Combat section): a blockable hit from the front is
+  parried as a perfect block, even mid-attack and without the block button. Blocks with the shield,
+  weapon or bare hands, as the game does; hits from behind and during a dodge are unchanged; the game's own block rules apply.
+  Applies to all attackers, creatures and players.
 - **Combo lab log.** Advanced option, off by default: a measurement log of inputs, attack
   starts, animator states and hits, for bug reports. Needs Debug log on as well.
 - **F8 toggle** with an on-screen message, and a master switch in the config.
